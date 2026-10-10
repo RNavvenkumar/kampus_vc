@@ -58,7 +58,6 @@ Kampus.VC is an AI-powered creator-brand marketplace and collaborative workspace
 | `RAZORPAY_ENVIRONMENT` | Yes | `test` or `live` |
 | `RAZORPAY_KEY_ID` | Yes | Razorpay Key ID (`rzp_test_...` or `rzp_live_...`) |
 | `RAZORPAY_KEY_SECRET` | Yes | Razorpay Key Secret |
-| `RAZORPAY_WEBHOOK_SECRET`| Yes | Secret configured in Razorpay Webhooks Dashboard |
 | `MEDIA_STORAGE_PROVIDER` | Yes | `cloudinary` (or `s3` / `local`) |
 | `CLOUDINARY_CLOUD_NAME` | Yes | Cloudinary Cloud Name |
 | `CLOUDINARY_API_KEY` | Yes | Cloudinary API Key |

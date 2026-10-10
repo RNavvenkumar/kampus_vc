@@ -14,8 +14,7 @@ export function getPaymentProvider(): IPaymentProvider {
   if (env.PAYMENT_PROVIDER === 'razorpay' && env.RAZORPAY_KEY_ID && env.RAZORPAY_KEY_SECRET) {
     activeProvider = new RazorpayProvider(
       env.RAZORPAY_KEY_ID,
-      env.RAZORPAY_KEY_SECRET,
-      env.RAZORPAY_WEBHOOK_SECRET
+      env.RAZORPAY_KEY_SECRET
     );
   } else {
     // Default fallback to MockPaymentProvider for testing / missing credentials

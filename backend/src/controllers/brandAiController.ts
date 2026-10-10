@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import { aiService } from '../services/aiService';
+import { aiService } from '../services/aiService.js';
 
 export const getAIProviderStatus = async (_req: Request, res: Response): Promise<void> => {
   const status = aiService.getProviderStatus();

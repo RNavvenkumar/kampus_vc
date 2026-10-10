@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { requireAuth, requireRole } from '../middleware/authMiddleware';
+import { requireAuth, requireRole } from '../middleware/authMiddleware.js';
 import {
   getAIProviderStatus,
   generateBrief,
@@ -7,7 +7,7 @@ import {
   analyzeMoodboard,
   synthesizeRequirements,
   improveDraft
-} from '../controllers/brandAiController';
+} from '../controllers/brandAiController.js';
 
 const router = Router();
 

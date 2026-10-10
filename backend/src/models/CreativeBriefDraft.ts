@@ -4,7 +4,7 @@ import {
   CreativeDirection,
   MoodboardAnalysis,
   RequirementSynthesis
-} from '../ai/schemas';
+} from '../ai/schemas.js';
 
 export interface IDraftImprovementHistory {
   timestamp: Date;

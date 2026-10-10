@@ -21,7 +21,7 @@ export class RazorpayProvider implements IPaymentProvider {
   constructor(keyId?: string, keySecret?: string, webhookSecret?: string) {
     this.keyId = keyId || env.RAZORPAY_KEY_ID || '';
     this.keySecret = keySecret || env.RAZORPAY_KEY_SECRET || '';
-    this.webhookSecret = webhookSecret || env.RAZORPAY_WEBHOOK_SECRET || '';
+    this.webhookSecret = webhookSecret || this.keySecret || '';
   }
 
   private getAuthHeader(): string {

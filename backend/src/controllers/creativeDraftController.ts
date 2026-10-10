@@ -1,10 +1,10 @@
 import { Request, Response } from 'express';
 import { Types } from 'mongoose';
-import { CreativeBriefDraft } from '../models/CreativeBriefDraft';
-import { CampaignBrief } from '../models/CampaignBrief';
-import { BrandProfile } from '../models/BrandProfile';
-import { User } from '../models/User';
-import { generatedBriefSchema } from '../ai/schemas';
+import { CreativeBriefDraft } from '../models/CreativeBriefDraft.js';
+import { CampaignBrief } from '../models/CampaignBrief.js';
+import { BrandProfile } from '../models/BrandProfile.js';
+import { User } from '../models/User.js';
+import { generatedBriefSchema } from '../ai/schemas.js';
 
 export const listCreativeDrafts = async (req: Request, res: Response): Promise<void> => {
   try {

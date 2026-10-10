@@ -1,7 +1,7 @@
-import { env } from '../config/env';
-import { IAIProvider, AIUsageMetrics } from '../ai/providerInterface';
-import { GeminiProvider } from '../ai/geminiProvider';
-import { MockAIProvider } from '../ai/mockProvider';
+import { env } from '../config/env.js';
+import { IAIProvider, AIUsageMetrics } from '../ai/providerInterface.js';
+import { GeminiProvider } from '../ai/geminiProvider.js';
+import { MockAIProvider } from '../ai/mockProvider.js';
 import {
   generatedBriefSchema,
   GeneratedBrief,
@@ -18,8 +18,8 @@ import {
   analyzeMoodboardInputSchema,
   synthesizeRequirementsInputSchema,
   improveDraftInputSchema
-} from '../ai/schemas';
-import { validatePublicHttpsUrl } from '../utils/ssrfGuard';
+} from '../ai/schemas.js';
+import { validatePublicHttpsUrl } from '../utils/ssrfGuard.js';
 
 interface UserUsageRecord {
   count: number;

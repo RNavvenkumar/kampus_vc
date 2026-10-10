@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { requireAuth, requireRole } from '../middleware/authMiddleware';
+import { requireAuth, requireRole } from '../middleware/authMiddleware.js';
 import {
   listCreativeDrafts,
   getCreativeDraft,
@@ -7,7 +7,7 @@ import {
   updateCreativeDraft,
   deleteCreativeDraft,
   createCampaignBriefFromDraft
-} from '../controllers/creativeDraftController';
+} from '../controllers/creativeDraftController.js';
 
 const router = Router();
 
