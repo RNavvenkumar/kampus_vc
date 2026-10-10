@@ -16,6 +16,25 @@ export async function connectDatabase(): Promise<boolean> {
     });
     lastConnectionError = null;
     console.log('✅ MongoDB connected successfully to:', mongoose.connection.name);
+
+    // Auto-clean obsolete indexes that cause E11000 crashes (e.g. legacy internalPaymentId_1)
+    try {
+      const collections = await mongoose.connection.db?.listCollections().toArray();
+      const paymentsCollectionExists = collections?.some((c) => c.name === 'payments');
+      if (paymentsCollectionExists) {
+        const paymentsCollection = mongoose.connection.db?.collection('payments');
+        const indexes = await paymentsCollection?.indexes();
+        const hasLegacyIndex = indexes?.some((idx) => idx.name === 'internalPaymentId_1');
+        if (hasLegacyIndex) {
+          console.log('🧹 Dropping stale legacy index internalPaymentId_1 from payments collection...');
+          await paymentsCollection?.dropIndex('internalPaymentId_1');
+          console.log('✅ Legacy index internalPaymentId_1 dropped successfully.');
+        }
+      }
+    } catch (cleanupErr) {
+      console.warn('Non-fatal index cleanup notice:', cleanupErr);
+    }
+
     return true;
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : 'Unknown database connection error';

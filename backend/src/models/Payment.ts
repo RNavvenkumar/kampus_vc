@@ -15,6 +15,7 @@ export type PaymentPurpose = 'full_project' | 'milestone_payment' | 'deposit' | 
 
 export interface IPayment extends Document {
   paymentReference: string;
+  internalPaymentId?: string;
   projectId: Types.ObjectId;
   milestoneId?: Types.ObjectId;
   brandId: Types.ObjectId;
@@ -50,6 +51,13 @@ const paymentSchema = new Schema<IPayment>(
       unique: true,
       trim: true,
       index: true
+    },
+    internalPaymentId: {
+      type: String,
+      trim: true,
+      default: function(this: any) {
+        return this.paymentReference || new mongoose.Types.ObjectId().toString();
+      }
     },
     projectId: {
       type: Schema.Types.ObjectId,
