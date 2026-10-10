@@ -192,18 +192,19 @@ export class PaymentController {
    * Brand submits checkout signature callback after user completes Razorpay Modal
    */
   static async verifyPayment(req: Request, res: Response): Promise<void> {
-    const { paymentId, gatewayOrderId, gatewayPaymentId, gatewaySignature } = req.body;
-    const userId = req.user?.id;
+    try {
+      const { paymentId, gatewayOrderId, gatewayPaymentId, gatewaySignature } = req.body;
+      const userId = req.user?.id;
 
-    if (!paymentId || !gatewayOrderId || !gatewayPaymentId || !gatewaySignature) {
-      res.status(400).json({
-        error: {
-          code: 'MISSING_PAYMENT_VERIFICATION_FIELDS',
-          message: 'paymentId, gatewayOrderId, gatewayPaymentId, and gatewaySignature are required'
-        }
-      });
-      return;
-    }
+      if (!paymentId || !gatewayOrderId || !gatewayPaymentId || !gatewaySignature) {
+        res.status(400).json({
+          error: {
+            code: 'MISSING_PAYMENT_VERIFICATION_FIELDS',
+            message: 'paymentId, gatewayOrderId, gatewayPaymentId, and gatewaySignature are required'
+          }
+        });
+        return;
+      }
 
     if (!Types.ObjectId.isValid(paymentId)) {
       res.status(400).json({ error: { code: 'INVALID_PAYMENT_ID', message: 'Invalid payment ID' } });
@@ -323,7 +324,16 @@ export class PaymentController {
       payment,
       ledgerSummary: summary
     });
+  } catch (err: any) {
+    console.error('Payment checkout verification error:', err);
+    res.status(500).json({
+      error: {
+        code: 'VERIFICATION_ERROR',
+        message: err.message || 'Payment verification encountered an unexpected error.'
+      }
+    });
   }
+}
 
   /**
    * POST /api/payments/webhook
