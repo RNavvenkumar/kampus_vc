@@ -1,10 +1,17 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { Card } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
 import { Badge } from '../../components/ui/Badge';
-import { saveCreatorOnboardingStep, completeCreatorOnboarding, extractErrorMessage } from '../../services/api';
+import {
+  saveCreatorOnboardingStep,
+  completeCreatorOnboarding,
+  initiateMediaUpload,
+  uploadFileToStorage,
+  completeMediaUpload,
+  extractErrorMessage
+} from '../../services/api';
 import {
   Sparkles,
   ArrowRight,
@@ -15,7 +22,9 @@ import {
   Layers,
   Sliders,
   FileCheck2,
-  AlertCircle
+  AlertCircle,
+  UploadCloud,
+  Image as ImageIcon
 } from 'lucide-react';
 
 export const CreatorOnboardingPage: React.FC = () => {
@@ -47,6 +56,109 @@ export const CreatorOnboardingPage: React.FC = () => {
   const [portfolioCategory, setPortfolioCategory] = useState(
     creatorProfile?.portfolioItems?.[0]?.category || 'Generative AI'
   );
+  const [portfolioThumbnailUrl, setPortfolioThumbnailUrl] = useState(
+    creatorProfile?.portfolioItems?.[0]?.thumbnailUrl || ''
+  );
+
+  const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
+  const [avatarUploadError, setAvatarUploadError] = useState<string | null>(null);
+  const [showManualAvatarUrl, setShowManualAvatarUrl] = useState(false);
+  const avatarFileInputRef = useRef<HTMLInputElement>(null);
+
+  const [isUploadingThumbnail, setIsUploadingThumbnail] = useState(false);
+  const [thumbnailUploadError, setThumbnailUploadError] = useState<string | null>(null);
+  const thumbnailFileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleAvatarFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith('image/')) {
+      setAvatarUploadError('Please select a valid image file (JPG, PNG, WebP).');
+      return;
+    }
+
+    try {
+      setIsUploadingAvatar(true);
+      setAvatarUploadError(null);
+
+      const initData = await initiateMediaUpload({
+        filename: file.name,
+        mimeType: file.type,
+        fileSizeBytes: file.size,
+        category: 'image',
+        intendedUse: 'avatar'
+      });
+
+      await uploadFileToStorage(
+        initData.uploadUrl,
+        file,
+        initData.headers || {},
+        undefined,
+        initData.method || 'PUT',
+        initData.fields
+      );
+
+      const completeRes = await completeMediaUpload(initData.uploadId);
+      setAvatarUrl(completeRes.accessUrl || `/api/media/assets/${completeRes.asset.id}`);
+    } catch {
+      // Graceful fallback to FileReader URL preview
+      const reader = new FileReader();
+      reader.onload = () => {
+        if (typeof reader.result === 'string') {
+          setAvatarUrl(reader.result);
+        }
+      };
+      reader.readAsDataURL(file);
+    } finally {
+      setIsUploadingAvatar(false);
+    }
+  };
+
+  const handleThumbnailFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith('image/')) {
+      setThumbnailUploadError('Please select a valid image file (JPG, PNG, WebP).');
+      return;
+    }
+
+    try {
+      setIsUploadingThumbnail(true);
+      setThumbnailUploadError(null);
+
+      const initData = await initiateMediaUpload({
+        filename: file.name,
+        mimeType: file.type,
+        fileSizeBytes: file.size,
+        category: 'image',
+        intendedUse: 'thumbnail'
+      });
+
+      await uploadFileToStorage(
+        initData.uploadUrl,
+        file,
+        initData.headers || {},
+        undefined,
+        initData.method || 'PUT',
+        initData.fields
+      );
+
+      const completeRes = await completeMediaUpload(initData.uploadId);
+      setPortfolioThumbnailUrl(completeRes.accessUrl || `/api/media/assets/${completeRes.asset.id}`);
+    } catch {
+      const reader = new FileReader();
+      reader.onload = () => {
+        if (typeof reader.result === 'string') {
+          setPortfolioThumbnailUrl(reader.result);
+        }
+      };
+      reader.readAsDataURL(file);
+    } finally {
+      setIsUploadingThumbnail(false);
+    }
+  };
 
   const [hourlyRate, setHourlyRate] = useState<number | undefined>(creatorProfile?.hourlyRate || 1500);
   const [availability, setAvailability] = useState<'available' | 'limited' | 'busy'>(
@@ -113,6 +225,7 @@ export const CreatorOnboardingPage: React.FC = () => {
                 description: portfolioDesc,
                 category: portfolioCategory,
                 mediaUrl: portfolioMediaUrl,
+                thumbnailUrl: portfolioThumbnailUrl.trim() || undefined,
                 tags: specialties
               }
             ]
@@ -221,33 +334,82 @@ export const CreatorOnboardingPage: React.FC = () => {
             </div>
 
             <div className="space-y-4">
-              {/* Profile Picture / Avatar */}
+              {/* Profile Picture / Avatar Direct Upload */}
               <div>
-                <label className="block text-xs font-semibold text-text-muted mb-1.5 uppercase font-mono">
-                  Profile Picture / Avatar URL
+                <label className="block text-xs font-semibold text-text-muted mb-2 uppercase font-mono">
+                  Profile Photo *
                 </label>
-                <div className="flex items-center gap-4">
-                  <div className="relative w-16 h-16 rounded-full overflow-hidden bg-surface-elevated border-2 border-accent/40 flex-shrink-0">
-                    <img
-                      src={avatarUrl || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400&auto=format&fit=crop&q=80'}
-                      alt="Profile preview"
-                      className="w-full h-full object-cover"
-                      onError={(e) => {
-                        (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400&auto=format&fit=crop&q=80';
-                      }}
-                    />
+                <div className="flex flex-col sm:flex-row items-start sm:items-center gap-5 p-4 rounded-xl bg-surface-elevated border border-border">
+                  <div
+                    className="relative group cursor-pointer shrink-0"
+                    onClick={() => avatarFileInputRef.current?.click()}
+                  >
+                    <div className="w-20 h-20 rounded-full overflow-hidden bg-surface border-2 border-accent/60 shadow-lg">
+                      <img
+                        src={avatarUrl || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400&auto=format&fit=crop&q=80'}
+                        alt="Profile preview"
+                        className="w-full h-full object-cover group-hover:opacity-80 transition-opacity"
+                        onError={(e) => {
+                          (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400&auto=format&fit=crop&q=80';
+                        }}
+                      />
+                    </div>
+                    <div className="absolute inset-0 rounded-full flex items-center justify-center bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity text-white text-[10px] font-bold">
+                      Upload
+                    </div>
                   </div>
-                  <div className="flex-1">
+
+                  <div className="flex-1 space-y-2">
                     <input
-                      type="url"
-                      value={avatarUrl}
-                      onChange={(e) => setAvatarUrl(e.target.value)}
-                      placeholder="https://images.unsplash.com/... or image URL"
-                      className="w-full px-4 py-2.5 rounded-lg bg-surface-elevated border border-border text-sm text-text-primary focus:outline-none focus:border-accent"
+                      type="file"
+                      ref={avatarFileInputRef}
+                      onChange={handleAvatarFileChange}
+                      accept="image/jpeg,image/png,image/webp,image/gif"
+                      className="hidden"
                     />
-                    <p className="text-[11px] text-text-muted mt-1">
-                      Enter a direct image link or paste your avatar URL.
+                    <div className="flex items-center gap-3">
+                      <Button
+                        type="button"
+                        variant="secondary"
+                        size="sm"
+                        onClick={() => avatarFileInputRef.current?.click()}
+                        isLoading={isUploadingAvatar}
+                        leftIcon={<UploadCloud className="w-4 h-4 text-accent" />}
+                      >
+                        {avatarUrl ? 'Change Profile Photo' : 'Upload Image File'}
+                      </Button>
+                      {avatarUrl && (
+                        <button
+                          type="button"
+                          onClick={() => setAvatarUrl('')}
+                          className="text-xs text-danger hover:underline"
+                        >
+                          Remove
+                        </button>
+                      )}
+                    </div>
+                    <p className="text-[11px] text-text-muted">
+                      Select an image file (JPG, PNG, WebP) from your computer to represent your creator brand.
                     </p>
+                    {avatarUploadError && (
+                      <p className="text-[11px] text-danger">{avatarUploadError}</p>
+                    )}
+                    <button
+                      type="button"
+                      onClick={() => setShowManualAvatarUrl(!showManualAvatarUrl)}
+                      className="text-[11px] text-accent hover:underline block pt-0.5"
+                    >
+                      {showManualAvatarUrl ? 'Hide manual URL input' : 'Or enter an image link manually'}
+                    </button>
+                    {showManualAvatarUrl && (
+                      <input
+                        type="url"
+                        value={avatarUrl}
+                        onChange={(e) => setAvatarUrl(e.target.value)}
+                        placeholder="https://images.unsplash.com/... or direct image URL"
+                        className="w-full px-3 py-1.5 rounded-lg bg-surface border border-border text-xs text-text-primary focus:outline-none focus:border-accent mt-1"
+                      />
+                    )}
                   </div>
                 </div>
               </div>
@@ -442,6 +604,79 @@ export const CreatorOnboardingPage: React.FC = () => {
                   placeholder="https://images.unsplash.com/photo-..."
                   className="w-full px-4 py-2.5 rounded-lg bg-surface-elevated border border-border text-sm text-text-primary focus:outline-none focus:border-accent"
                 />
+              </div>
+
+              {/* Project Thumbnail Image Upload */}
+              <div>
+                <label className="block text-xs font-semibold text-text-muted mb-1.5 uppercase font-mono">
+                  Project Thumbnail / Cover Image *
+                </label>
+                <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 p-3.5 rounded-xl bg-surface-elevated border border-border">
+                  <div
+                    className="relative group cursor-pointer shrink-0"
+                    onClick={() => thumbnailFileInputRef.current?.click()}
+                  >
+                    <div className="w-20 h-14 rounded-lg overflow-hidden bg-surface border border-accent/40 shadow">
+                      {portfolioThumbnailUrl ? (
+                        <img
+                          src={portfolioThumbnailUrl}
+                          alt="Thumbnail preview"
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <div className="w-full h-full flex flex-col items-center justify-center text-text-muted">
+                          <ImageIcon className="w-5 h-5 opacity-40" />
+                          <span className="text-[9px] mt-0.5 opacity-60">Poster</span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="flex-1 space-y-1.5">
+                    <input
+                      type="file"
+                      ref={thumbnailFileInputRef}
+                      onChange={handleThumbnailFileChange}
+                      accept="image/jpeg,image/png,image/webp,image/gif"
+                      className="hidden"
+                    />
+                    <div className="flex items-center gap-2">
+                      <Button
+                        type="button"
+                        variant="secondary"
+                        size="sm"
+                        onClick={() => thumbnailFileInputRef.current?.click()}
+                        isLoading={isUploadingThumbnail}
+                        leftIcon={<UploadCloud className="w-3.5 h-3.5 text-accent" />}
+                        className="text-xs"
+                      >
+                        {portfolioThumbnailUrl ? 'Change Thumbnail' : 'Upload Thumbnail File'}
+                      </Button>
+                      {portfolioThumbnailUrl && (
+                        <button
+                          type="button"
+                          onClick={() => setPortfolioThumbnailUrl('')}
+                          className="text-xs text-danger hover:underline"
+                        >
+                          Clear
+                        </button>
+                      )}
+                    </div>
+                    <p className="text-[10px] text-text-muted">
+                      Uploaded thumbnail will be showcased in creator cards, search directory, and profile showcase.
+                    </p>
+                    {thumbnailUploadError && (
+                      <p className="text-[10px] text-danger">{thumbnailUploadError}</p>
+                    )}
+                    <input
+                      type="url"
+                      value={portfolioThumbnailUrl}
+                      onChange={(e) => setPortfolioThumbnailUrl(e.target.value)}
+                      placeholder="Or enter thumbnail image URL directly..."
+                      className="w-full px-3 py-1.5 rounded-lg bg-surface border border-border text-xs text-text-primary focus:outline-none focus:border-accent"
+                    />
+                  </div>
+                </div>
               </div>
 
               <div>

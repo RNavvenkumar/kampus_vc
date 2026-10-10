@@ -9,6 +9,7 @@ import { proposalRouter } from './proposalRoutes.js';
 import { brandProposalRouter } from './brandProposalRoutes.js';
 import { projectRouter } from './projectRoutes.js';
 import { notificationRouter } from './notificationRoutes.js';
+import { conversationRouter } from './conversationRoutes.js';
 import { brandAiRoutes } from './brandAiRoutes.js';
 import { creativeDraftRoutes } from './creativeDraftRoutes.js';
 import mediaRouter from './mediaRoutes.js';
@@ -48,6 +49,9 @@ apiRouter.use('/projects', projectRouter);
 
 // Mount In-App Notifications
 apiRouter.use('/notifications', notificationRouter);
+
+// Mount Direct Messaging & Inquiries
+apiRouter.use('/conversations', conversationRouter);
 
 // Mount Secure Media Object Storage & Uploads (Phase 7)
 apiRouter.use('/media', mediaRouter);

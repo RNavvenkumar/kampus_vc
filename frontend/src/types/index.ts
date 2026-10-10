@@ -355,7 +355,12 @@ export type NotificationType =
   | 'deliverable_approved'
   | 'milestone_status_changed'
   | 'project_completed'
-  | 'project_status_changed';
+  | 'project_status_changed'
+  | 'payment_captured'
+  | 'payment_failed'
+  | 'refund_processed'
+  | 'project_inquiry'
+  | 'direct_message';
 
 export interface NotificationItem {
   id: string;
@@ -366,10 +371,59 @@ export interface NotificationItem {
   proposalId?: string;
   briefId?: string;
   projectId?: string;
+  conversationId?: string;
   isRead: boolean;
   createdAt: string;
   updatedAt: string;
 }
+
+export interface ConversationParticipant {
+  id: string;
+  name: string;
+  email?: string;
+  role: 'creator' | 'brand' | 'admin';
+  avatarUrl?: string;
+}
+
+export interface DirectMessage {
+  id: string;
+  conversationId: string;
+  senderId: string;
+  sender?: ConversationParticipant;
+  recipientId: string;
+  content: string;
+  isRead: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface Conversation {
+  id: string;
+  participants: (string | ConversationParticipant)[];
+  partner?: ConversationParticipant;
+  creatorProfile?: {
+    id: string;
+    displayName: string;
+    headline?: string;
+    avatarUrl?: string;
+  };
+  lastMessage?: {
+    content: string;
+    senderId: string;
+    sentAt: string;
+  };
+  lastMessageAt?: string;
+  inquiryContext?: {
+    serviceTitle?: string;
+    packageTier?: string;
+    price?: number;
+    currency?: string;
+  };
+  unreadCount?: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export type BudgetType = 'fixed' | 'range';
 export type EngagementType = 'milestone' | 'retainer' | 'one_off';
 export type LocationPreference = 'remote' | 'hybrid' | 'onsite';

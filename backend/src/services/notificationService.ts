@@ -9,6 +9,7 @@ interface CreateNotificationParams {
   proposalId?: Types.ObjectId | string;
   briefId?: Types.ObjectId | string;
   projectId?: Types.ObjectId | string;
+  conversationId?: Types.ObjectId | string;
   idempotencyKey?: string;
 }
 
@@ -29,6 +30,7 @@ export async function createNotification(params: CreateNotificationParams): Prom
       proposalId: params.proposalId,
       briefId: params.briefId,
       projectId: params.projectId,
+      conversationId: params.conversationId,
       idempotencyKey: params.idempotencyKey
     });
   } catch (err) {

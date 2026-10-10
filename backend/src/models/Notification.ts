@@ -18,7 +18,9 @@ export type NotificationType =
   | 'project_status_changed'
   | 'payment_captured'
   | 'payment_failed'
-  | 'refund_processed';
+  | 'refund_processed'
+  | 'project_inquiry'
+  | 'direct_message';
 
 export interface INotification extends Document {
   recipientId: Types.ObjectId;
@@ -29,6 +31,7 @@ export interface INotification extends Document {
   briefId?: Types.ObjectId;
   projectId?: Types.ObjectId;
   paymentId?: Types.ObjectId;
+  conversationId?: Types.ObjectId;
   isRead: boolean;
   idempotencyKey?: string;
   createdAt: Date;
@@ -64,7 +67,9 @@ const notificationSchema = new Schema<INotification>(
         'project_status_changed',
         'payment_captured',
         'payment_failed',
-        'refund_processed'
+        'refund_processed',
+        'project_inquiry',
+        'direct_message'
       ]
     },
     title: {
@@ -90,6 +95,10 @@ const notificationSchema = new Schema<INotification>(
     projectId: {
       type: Schema.Types.ObjectId,
       ref: 'Project'
+    },
+    conversationId: {
+      type: Schema.Types.ObjectId,
+      ref: 'Conversation'
     },
     isRead: {
       type: Boolean,

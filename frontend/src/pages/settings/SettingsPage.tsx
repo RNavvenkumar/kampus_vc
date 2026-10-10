@@ -1,10 +1,15 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { Card } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
 import { Badge } from '../../components/ui/Badge';
-import { extractErrorMessage } from '../../services/api';
-import { Lock, User, CheckCircle2, AlertCircle } from 'lucide-react';
+import {
+  initiateMediaUpload,
+  uploadFileToStorage,
+  completeMediaUpload,
+  extractErrorMessage
+} from '../../services/api';
+import { Lock, User, CheckCircle2, AlertCircle, UploadCloud } from 'lucide-react';
 
 export const SettingsPage: React.FC = () => {
   const { user, creatorProfile, brandProfile, updateCreatorProfile, updateBrandProfile, changePassword } =
@@ -32,6 +37,54 @@ export const SettingsPage: React.FC = () => {
 
   const [profileStatus, setProfileStatus] = useState<{ success?: string; error?: string } | null>(null);
   const [isProfileLoading, setIsProfileLoading] = useState(false);
+  const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
+  const [avatarError, setAvatarError] = useState<string | null>(null);
+  const avatarInputRef = useRef<HTMLInputElement>(null);
+
+  const handleAvatarFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith('image/')) {
+      setAvatarError('Please select a valid image file (JPG, PNG, WebP).');
+      return;
+    }
+
+    try {
+      setIsUploadingAvatar(true);
+      setAvatarError(null);
+
+      const initData = await initiateMediaUpload({
+        filename: file.name,
+        mimeType: file.type,
+        fileSizeBytes: file.size,
+        category: 'image',
+        intendedUse: 'avatar'
+      });
+
+      await uploadFileToStorage(
+        initData.uploadUrl,
+        file,
+        initData.headers || {},
+        undefined,
+        initData.method || 'PUT',
+        initData.fields
+      );
+
+      const completeRes = await completeMediaUpload(initData.uploadId);
+      setCreatorAvatar(completeRes.accessUrl || `/api/media/assets/${completeRes.asset.id}`);
+    } catch {
+      const reader = new FileReader();
+      reader.onload = () => {
+        if (typeof reader.result === 'string') {
+          setCreatorAvatar(reader.result);
+        }
+      };
+      reader.readAsDataURL(file);
+    } finally {
+      setIsUploadingAvatar(false);
+    }
+  };
 
   const handlePasswordSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -143,27 +196,66 @@ export const SettingsPage: React.FC = () => {
             {user?.role === 'creator' ? (
               <>
                 <div>
-                  <label className="block text-xs font-semibold text-text-muted mb-1.5 uppercase font-mono">
-                    Profile Picture / Avatar URL
+                  <label className="block text-xs font-semibold text-text-muted mb-2 uppercase font-mono">
+                    Profile Photo
                   </label>
-                  <div className="flex items-center gap-4">
-                    <div className="relative w-14 h-14 rounded-full overflow-hidden bg-surface-elevated border-2 border-accent/40 flex-shrink-0">
-                      <img
-                        src={creatorAvatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400&auto=format&fit=crop&q=80'}
-                        alt="Profile avatar"
-                        className="w-full h-full object-cover"
-                        onError={(e) => {
-                          (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400&auto=format&fit=crop&q=80';
-                        }}
-                      />
+                  <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 p-3.5 rounded-xl bg-surface-elevated border border-border">
+                    <div
+                      className="relative group cursor-pointer shrink-0"
+                      onClick={() => avatarInputRef.current?.click()}
+                    >
+                      <div className="w-16 h-16 rounded-full overflow-hidden bg-surface border-2 border-accent/40 shadow flex-shrink-0">
+                        <img
+                          src={creatorAvatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400&auto=format&fit=crop&q=80'}
+                          alt="Profile avatar"
+                          className="w-full h-full object-cover group-hover:opacity-80 transition-opacity"
+                          onError={(e) => {
+                            (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400&auto=format&fit=crop&q=80';
+                          }}
+                        />
+                      </div>
+                      <div className="absolute inset-0 rounded-full flex items-center justify-center bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity text-white text-[9px] font-bold">
+                        Upload
+                      </div>
                     </div>
-                    <div className="flex-1">
+
+                    <div className="flex-1 space-y-1.5">
+                      <input
+                        type="file"
+                        ref={avatarInputRef}
+                        onChange={handleAvatarFileChange}
+                        accept="image/jpeg,image/png,image/webp,image/gif"
+                        className="hidden"
+                      />
+                      <div className="flex items-center gap-2">
+                        <Button
+                          type="button"
+                          variant="secondary"
+                          size="sm"
+                          onClick={() => avatarInputRef.current?.click()}
+                          isLoading={isUploadingAvatar}
+                          leftIcon={<UploadCloud className="w-3.5 h-3.5 text-accent" />}
+                          className="text-xs"
+                        >
+                          {creatorAvatar ? 'Change Photo' : 'Upload Image File'}
+                        </Button>
+                        {creatorAvatar && (
+                          <button
+                            type="button"
+                            onClick={() => setCreatorAvatar('')}
+                            className="text-xs text-danger hover:underline"
+                          >
+                            Remove
+                          </button>
+                        )}
+                      </div>
+                      {avatarError && <p className="text-[10px] text-danger">{avatarError}</p>}
                       <input
                         type="url"
                         value={creatorAvatar}
                         onChange={(e) => setCreatorAvatar(e.target.value)}
-                        placeholder="https://images.unsplash.com/... or image link"
-                        className="w-full px-4 py-2.5 rounded-lg bg-surface-elevated border border-border text-sm text-text-primary focus:outline-none focus:border-accent"
+                        placeholder="Or enter direct image URL..."
+                        className="w-full px-3 py-1.5 rounded-lg bg-surface border border-border text-xs text-text-primary focus:outline-none focus:border-accent"
                       />
                     </div>
                   </div>

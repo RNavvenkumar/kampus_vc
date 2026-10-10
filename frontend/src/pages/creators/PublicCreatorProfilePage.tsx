@@ -34,6 +34,8 @@ const isVideoMedia = (url?: string, type?: string) => {
   return /\.(mp4|webm|mov|ogg|m4v)(\?.*)?$/i.test(url) || url.includes('/video/upload/');
 };
 
+import { DirectChatModal } from '../../components/chat/DirectChatModal';
+
 export const PublicCreatorProfilePage: React.FC = () => {
   const { usernameOrId } = useParams<{ usernameOrId: string }>();
   const [profile, setProfile] = useState<CreatorProfile | null>(null);
@@ -43,6 +45,15 @@ export const PublicCreatorProfilePage: React.FC = () => {
   // Active Portfolio item preview modal
   const [selectedItem, setSelectedItem] = useState<PortfolioItem | null>(null);
   const [copiedVideo, setCopiedVideo] = useState(false);
+
+  // Real-Time Direct Chat & Inquiry Modal
+  const [isChatOpen, setIsChatOpen] = useState(false);
+  const [selectedInquiry, setSelectedInquiry] = useState<{
+    serviceTitle?: string;
+    packageTier?: string;
+    price?: number;
+    currency?: string;
+  } | undefined>(undefined);
 
   useEffect(() => {
     const fetchProfile = async () => {
@@ -231,7 +242,8 @@ export const PublicCreatorProfilePage: React.FC = () => {
               variant="primary"
               size="sm"
               onClick={() => {
-                alert(`Direct project inquiry registered for ${profile.displayName}! The creator has been notified.`);
+                setSelectedInquiry(undefined);
+                setIsChatOpen(true);
               }}
             >
               Inquire for Project
@@ -519,7 +531,13 @@ export const PublicCreatorProfilePage: React.FC = () => {
                   size="md"
                   className="w-full"
                   onClick={() => {
-                    alert(`Inquiry for "${service.title}" package registered! The creator has been notified to set up the project agreement.`);
+                    setSelectedInquiry({
+                      serviceTitle: service.title,
+                      packageTier: service.packageTier,
+                      price: service.price,
+                      currency: service.currency || 'INR'
+                    });
+                    setIsChatOpen(true);
                   }}
                 >
                   Book This Package
@@ -642,6 +660,21 @@ export const PublicCreatorProfilePage: React.FC = () => {
             </div>
           </div>
         </div>
+      )}
+
+      {/* Direct Messaging & Inquiry Modal */}
+      {profile && (
+        <DirectChatModal
+          isOpen={isChatOpen}
+          onClose={() => setIsChatOpen(false)}
+          targetCreator={{
+            id: profile.id,
+            displayName: profile.displayName,
+            avatarUrl: profile.avatarUrl,
+            headline: profile.headline
+          }}
+          initialInquiry={selectedInquiry}
+        />
       )}
     </div>
   );

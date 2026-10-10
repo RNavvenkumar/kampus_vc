@@ -18,10 +18,12 @@ import {
   Briefcase,
   Plus,
   Bell,
+  MessageSquare,
   FileText,
   FolderKanban,
   Search
 } from 'lucide-react';
+import { DirectChatModal } from '../chat/DirectChatModal';
 import {
   getBackendHealth,
   getUnreadNotificationCount,
@@ -38,6 +40,8 @@ export const Navbar: React.FC = () => {
   const [unreadCount, setUnreadCount] = useState<number>(0);
   const [recentNotifications, setRecentNotifications] = useState<NotificationItem[]>([]);
   const [serverOnline, setServerOnline] = useState<boolean | null>(null);
+  const [chatModalOpen, setChatModalOpen] = useState(false);
+  const [chatConversationId, setChatConversationId] = useState<string | undefined>(undefined);
 
   const location = useLocation();
   const navigate = useNavigate();
@@ -103,6 +107,9 @@ export const Navbar: React.FC = () => {
         }
       } else if (notif.briefId) {
         navigate(`/briefs/${notif.briefId}`);
+      } else if (notif.conversationId) {
+        setChatConversationId(notif.conversationId);
+        setChatModalOpen(true);
       }
     } catch (err) {
       console.error(err);
@@ -178,6 +185,19 @@ export const Navbar: React.FC = () => {
 
           {isAuthenticated && user ? (
             <div className="flex items-center gap-3 relative">
+              {/* Direct Messages Button */}
+              <button
+                onClick={() => {
+                  setChatConversationId(undefined);
+                  setChatModalOpen(true);
+                }}
+                className="p-2 rounded-full bg-surface-elevated border border-border text-gray-400 hover:text-emerald-400 hover:border-emerald-500/50 relative transition-colors focus:outline-none"
+                aria-label="Direct Messages"
+                title="Direct Messages & Real-Time Chat"
+              >
+                <MessageSquare className="w-4 h-4 text-emerald-400" />
+              </button>
+
               {/* Notification Bell */}
               <div className="relative">
                 <button
@@ -505,6 +525,16 @@ export const Navbar: React.FC = () => {
           </div>
         </div>
       )}
+
+      {/* Global Direct Chat Modal */}
+      <DirectChatModal
+        isOpen={chatModalOpen}
+        onClose={() => {
+          setChatModalOpen(false);
+          setChatConversationId(undefined);
+        }}
+        initialConversationId={chatConversationId}
+      />
     </header>
   );
 };

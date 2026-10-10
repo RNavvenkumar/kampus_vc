@@ -35,6 +35,7 @@ export const PortfolioEditorModal: React.FC<PortfolioEditorModalProps> = ({
   const [description, setDescription] = useState('');
   const [mediaType, setMediaType] = useState<'image' | 'video' | 'project'>('image');
   const [mediaMode, setMediaMode] = useState<'upload' | 'url'>('upload');
+  const [thumbnailMode, setThumbnailMode] = useState<'upload' | 'url'>('upload');
   const [mediaUrl, setMediaUrl] = useState('');
   const [assetId, setAssetId] = useState<string | undefined>(undefined);
   const [thumbnailAssetId, setThumbnailAssetId] = useState<string | undefined>(undefined);
@@ -302,17 +303,65 @@ export const PortfolioEditorModal: React.FC<PortfolioEditorModalProps> = ({
               />
             )}
 
-            {(mediaType === 'video' || /\.(mp4|webm|mov|ogg|m4v)/i.test(mediaUrl)) && (
-              <div className="pt-2">
-                <Input
-                  label="Thumbnail / Poster Image URL (Optional)"
-                  placeholder="https://images.unsplash.com/... (image displayed before video plays)"
-                  value={thumbnailUrl}
-                  onChange={(e) => setThumbnailUrl(e.target.value)}
-                  helperText="Recommended for video cards and featured preview thumbnails"
-                />
+            {/* Project Thumbnail / Cover Poster Upload */}
+            <div className="pt-3 border-t border-border/60 space-y-2">
+              <div className="flex justify-between items-center">
+                <label className="block text-xs font-semibold text-text-secondary uppercase font-mono">
+                  Project Thumbnail / Cover Image (Showcased on Profile & Cards)
+                </label>
+                <div className="flex bg-surface-elevated rounded-lg p-0.5 border border-border">
+                  <button
+                    type="button"
+                    onClick={() => setThumbnailMode('upload')}
+                    className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11px] font-medium transition-all ${
+                      thumbnailMode === 'upload'
+                        ? 'bg-accent/20 text-accent font-semibold shadow-sm'
+                        : 'text-text-muted hover:text-text-primary'
+                    }`}
+                  >
+                    <UploadCloud className="w-3 h-3" /> Upload File
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setThumbnailMode('url')}
+                    className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11px] font-medium transition-all ${
+                      thumbnailMode === 'url'
+                        ? 'bg-accent/20 text-accent font-semibold shadow-sm'
+                        : 'text-text-muted hover:text-text-primary'
+                    }`}
+                  >
+                    <LinkIcon className="w-3 h-3" /> Image URL
+                  </button>
+                </div>
               </div>
-            )}
+
+              {thumbnailMode === 'upload' ? (
+                <MediaUploadDropzone
+                  category="image"
+                  currentUrl={thumbnailUrl}
+                  currentAssetId={thumbnailAssetId}
+                  label="Upload Thumbnail Poster (JPG, PNG, WebP)"
+                  onUploadComplete={(asset, accessUrl) => {
+                    setThumbnailAssetId(asset.id);
+                    setThumbnailUrl(accessUrl || `/api/media/assets/${asset.id}`);
+                  }}
+                  onRemove={() => {
+                    setThumbnailAssetId(undefined);
+                    setThumbnailUrl('');
+                  }}
+                />
+              ) : (
+                <Input
+                  placeholder="https://images.unsplash.com/... or hosted image URL"
+                  value={thumbnailUrl}
+                  onChange={(e) => {
+                    setThumbnailUrl(e.target.value);
+                    setThumbnailAssetId(undefined);
+                  }}
+                  helperText="Showcased as cover artwork in creator cards, search, and video previews"
+                />
+              )}
+            </div>
           </div>
 
           {/* Description */}

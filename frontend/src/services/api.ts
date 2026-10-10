@@ -36,7 +36,9 @@ import {
   PaymentRecord,
   RefundRecord,
   ProjectFinancialsResponse,
-  CreateOrderResponse
+  CreateOrderResponse,
+  Conversation,
+  DirectMessage
 } from '../types';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api';
@@ -1311,6 +1313,56 @@ export async function reconcilePayment(paymentId: string): Promise<{
     ledgerSummary: any;
   }>('/payments/reconcile', { paymentId });
   return response.data;
+}
+
+// ----------------------------------------------------
+// Direct Conversations & Real-Time Messaging API
+// ----------------------------------------------------
+
+export async function inquireCreator(payload: {
+  creatorId: string;
+  message?: string;
+  serviceTitle?: string;
+  packageTier?: string;
+  price?: number;
+  currency?: string;
+}): Promise<{ conversation: Conversation; message: DirectMessage }> {
+  const response = await apiClient.post<{
+    success: boolean;
+    message: string;
+    data: { conversation: Conversation; message: DirectMessage };
+  }>('/conversations/inquire', payload);
+  return response.data.data;
+}
+
+export async function getMyConversations(): Promise<Conversation[]> {
+  const response = await apiClient.get<{
+    success: boolean;
+    data: { conversations: Conversation[] };
+  }>('/conversations');
+  return response.data.data.conversations;
+}
+
+export async function getConversationMessages(conversationId: string): Promise<{
+  conversation: Conversation;
+  messages: DirectMessage[];
+}> {
+  const response = await apiClient.get<{
+    success: boolean;
+    data: { conversation: Conversation; messages: DirectMessage[] };
+  }>(`/conversations/${conversationId}/messages`);
+  return response.data.data;
+}
+
+export async function sendDirectMessage(
+  conversationId: string,
+  content: string
+): Promise<DirectMessage> {
+  const response = await apiClient.post<{
+    success: boolean;
+    data: { message: DirectMessage };
+  }>(`/conversations/${conversationId}/messages`, { content });
+  return response.data.data.message;
 }
 
 
