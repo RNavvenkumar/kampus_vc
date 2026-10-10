@@ -209,7 +209,7 @@ export class S3StorageProvider implements IStorageProvider {
       headers: {
         'Content-Type': mimeType
       },
-      body: buffer
+      body: new Uint8Array(buffer)
     });
 
     if (!response.ok) {
