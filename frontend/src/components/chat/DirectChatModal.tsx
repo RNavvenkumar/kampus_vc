@@ -1,10 +1,15 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import {
   X,
   Send,
   MessageSquare,
   CheckCircle2,
-  RefreshCw
+  RefreshCw,
+  Search,
+  CheckCheck,
+  User,
+  ExternalLink
 } from 'lucide-react';
 import { Conversation, DirectMessage } from '../../types';
 import {
@@ -48,6 +53,7 @@ export const DirectChatModal: React.FC<DirectChatModalProps> = ({
   const [activeConversation, setActiveConversation] = useState<Conversation | null>(null);
   const [messages, setMessages] = useState<DirectMessage[]>([]);
   const [inputText, setInputText] = useState('');
+  const [searchQuery, setSearchQuery] = useState('');
   const [isLoadingConversations, setIsLoadingConversations] = useState(false);
   const [isLoadingMessages, setIsLoadingMessages] = useState(false);
   const [isSending, setIsSending] = useState(false);
@@ -62,6 +68,26 @@ export const DirectChatModal: React.FC<DirectChatModalProps> = ({
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
+
+  // Lock body scroll and handle Escape key while modal is open
+  useEffect(() => {
+    if (isOpen) {
+      const originalOverflow = document.body.style.overflow;
+      document.body.style.overflow = 'hidden';
+
+      const handleKeyDown = (e: KeyboardEvent) => {
+        if (e.key === 'Escape') {
+          onClose();
+        }
+      };
+
+      window.addEventListener('keydown', handleKeyDown);
+      return () => {
+        document.body.style.overflow = originalOverflow;
+        window.removeEventListener('keydown', handleKeyDown);
+      };
+    }
+  }, [isOpen, onClose]);
 
   // Load conversations when opened
   const loadConversations = async (targetSelectId?: string) => {
@@ -153,7 +179,7 @@ export const DirectChatModal: React.FC<DirectChatModalProps> = ({
           }
           return prev;
         });
-      } catch (e) {
+      } catch {
         // Ignore polling errors silently
       }
     }, 3000);
@@ -186,7 +212,7 @@ export const DirectChatModal: React.FC<DirectChatModalProps> = ({
         id: user?.id || '',
         name: user?.name || 'You',
         role: user?.role || 'brand',
-        avatarUrl: user?.avatarUrl || user?.avatar
+        avatarUrl: user?.avatarUrl
       }
     };
 
@@ -223,7 +249,7 @@ export const DirectChatModal: React.FC<DirectChatModalProps> = ({
         currency: initialInquiry?.currency || 'INR'
       });
 
-      setInquirySuccessAlert(`Your inquiry has been sent to ${targetCreator.displayName}! A real-time notification has been delivered to their account.`);
+      setInquirySuccessAlert(`Inquiry sent to ${targetCreator.displayName}! Conversation initialized.`);
       setIsInquiryMode(false);
       setActiveConversation(res.conversation);
       setMessages([res.message]);
@@ -237,28 +263,55 @@ export const DirectChatModal: React.FC<DirectChatModalProps> = ({
 
   if (!isOpen) return null;
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 bg-black/80 backdrop-blur-md animate-fadeIn">
-      <div className="w-full max-w-4xl h-[620px] max-h-[92vh] bg-[#0E121A] border border-[#222938] text-white rounded-2xl shadow-2xl flex flex-col overflow-hidden">
-        {/* Top Header */}
-        <div className="p-4 px-6 border-b border-[#1E2536] bg-[#0A0D14] flex items-center justify-between">
+  const filteredConversations = conversations.filter((c) => {
+    const name = c.partner?.name || c.creatorProfile?.displayName || '';
+    return name.toLowerCase().includes(searchQuery.toLowerCase());
+  });
+
+  return createPortal(
+    <div
+      className="fixed inset-0 z-[99999] flex items-center justify-center p-3 sm:p-6 bg-black/85 backdrop-blur-md overflow-hidden animate-fadeIn"
+      style={{
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        width: '100vw',
+        height: '100vh',
+        zIndex: 99999,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center'
+      }}
+      onClick={(e) => {
+        if (e.target === e.currentTarget) onClose();
+      }}
+    >
+      <div
+        className="relative w-full max-w-4xl h-[680px] max-h-[90vh] bg-[#0b141a] border border-[#222c36] text-white rounded-2xl shadow-2xl flex flex-col overflow-hidden m-auto"
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* WhatsApp-Style Top Header Bar */}
+        <div className="p-3.5 px-6 border-b border-[#202c33] bg-[#202c33] flex items-center justify-between shrink-0">
           <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-lg bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center text-emerald-400">
-              <MessageSquare className="w-4 h-4" />
+            <div className="w-9 h-9 rounded-full bg-emerald-600 flex items-center justify-center text-white font-bold shadow-sm">
+              <MessageSquare className="w-5 h-5" />
             </div>
             <div>
-              <h2 className="text-sm font-bold text-white flex items-center gap-2">
-                <span>Real-Time Direct Messenger</span>
+              <h2 className="text-sm font-bold text-slate-100 flex items-center gap-2">
+                <span>Kampus.VC Messages</span>
                 <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
               </h2>
-              <p className="text-[11px] text-gray-400">
-                Direct text collaboration between Brands & Creators with real-time in-app notifications
+              <p className="text-[11px] text-emerald-400 font-mono">
+                Real-Time WhatsApp Encrypted Chat
               </p>
             </div>
           </div>
           <button
             onClick={onClose}
-            className="p-1.5 rounded-lg text-gray-400 hover:text-white hover:bg-gray-800 transition-colors"
+            className="p-1.5 rounded-xl text-slate-400 hover:text-white hover:bg-[#2a3942] transition-colors"
+            aria-label="Close chat window"
           >
             <X className="w-5 h-5" />
           </button>
@@ -266,14 +319,14 @@ export const DirectChatModal: React.FC<DirectChatModalProps> = ({
 
         {/* Success Alert Banner if just inquired */}
         {inquirySuccessAlert && (
-          <div className="p-3 px-6 bg-emerald-950/60 border-b border-emerald-500/30 text-emerald-200 text-xs flex items-center justify-between gap-2">
+          <div className="p-3 px-6 bg-emerald-950/80 border-b border-emerald-500/30 text-emerald-200 text-xs flex items-center justify-between gap-2 shrink-0">
             <div className="flex items-center gap-2">
               <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
               <span>{inquirySuccessAlert}</span>
             </div>
             <button
               onClick={() => setInquirySuccessAlert(null)}
-              className="text-emerald-400 hover:text-emerald-300 text-xs"
+              className="text-emerald-400 hover:text-emerald-300 text-xs font-semibold"
             >
               Dismiss
             </button>
@@ -281,34 +334,42 @@ export const DirectChatModal: React.FC<DirectChatModalProps> = ({
         )}
 
         {/* Modal Main Content: Split into Sidebar and Chat Window */}
-        <div className="flex-1 flex min-h-0">
+        <div className="flex-1 flex min-h-0 bg-[#0b141a]">
           {/* Left Sidebar: Conversations List */}
-          <div className="w-72 sm:w-80 border-r border-[#1E2536] bg-[#0A0D14]/60 flex flex-col shrink-0">
-            <div className="p-3 px-4 border-b border-[#1E2536] flex items-center justify-between">
-              <span className="text-xs font-semibold text-gray-400 uppercase tracking-wider font-mono">
-                Conversations ({conversations.length})
-              </span>
+          <div className="w-72 sm:w-80 border-r border-[#202c33] bg-[#111b21] flex flex-col shrink-0">
+            {/* Search & Refresh Bar */}
+            <div className="p-2.5 bg-[#111b21] border-b border-[#202c33] flex items-center gap-2">
+              <div className="relative flex-1">
+                <Search className="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-2.5" />
+                <input
+                  type="text"
+                  placeholder="Search chats..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-full bg-[#202c33] border-none rounded-lg pl-8 pr-2.5 py-1.5 text-xs text-slate-200 placeholder:text-slate-400 focus:outline-none focus:ring-1 focus:ring-emerald-500 transition-all"
+                />
+              </div>
               <button
                 onClick={() => loadConversations()}
-                className="text-gray-400 hover:text-white p-1 rounded hover:bg-gray-800 transition-colors"
+                className="text-slate-400 hover:text-white p-1.5 rounded-lg hover:bg-[#202c33] transition-colors"
                 title="Refresh conversations"
               >
-                <RefreshCw className="w-3.5 h-3.5" />
+                <RefreshCw className={`w-3.5 h-3.5 ${isLoadingConversations ? 'animate-spin' : ''}`} />
               </button>
             </div>
 
-            <div className="flex-1 overflow-y-auto p-2 space-y-1">
+            <div className="flex-1 overflow-y-auto divide-y divide-[#202c33]/40 p-1">
               {isLoadingConversations && conversations.length === 0 ? (
-                <div className="p-6 text-center text-xs text-gray-500">Loading inbox...</div>
-              ) : conversations.length === 0 && !targetCreator ? (
-                <div className="p-6 text-center text-xs text-gray-500 space-y-2">
-                  <p>No conversations yet.</p>
-                  <p className="text-[11px] text-gray-600">
-                    Visit any creator profile and click "Inquire for Project" to start texting.
+                <div className="p-6 text-center text-xs text-slate-500">Loading inbox...</div>
+              ) : filteredConversations.length === 0 && !targetCreator ? (
+                <div className="p-6 text-center text-xs text-slate-500 space-y-2">
+                  <p>No conversations found.</p>
+                  <p className="text-[11px] text-slate-600">
+                    Visit any creator profile and click "Message Creator" to start texting.
                   </p>
                 </div>
               ) : (
-                conversations.map((conv) => {
+                filteredConversations.map((conv) => {
                   const isSelected = activeConversation?.id === conv.id && !isInquiryMode;
                   const partner = conv.partner;
                   const creatorInfo = conv.creatorProfile;
@@ -321,8 +382,8 @@ export const DirectChatModal: React.FC<DirectChatModalProps> = ({
                       onClick={() => selectConversation(conv)}
                       className={`w-full p-3 rounded-xl text-left transition-all flex items-start gap-3 border ${
                         isSelected
-                          ? 'bg-[#151B27] border-emerald-500/50 shadow-sm'
-                          : 'bg-transparent border-transparent hover:bg-gray-900/60 hover:border-[#1E2536]'
+                          ? 'bg-[#2a3942] border-emerald-500/40 shadow-sm'
+                          : 'bg-transparent border-transparent hover:bg-[#202c33]'
                       }`}
                     >
                       <div className="relative shrink-0">
@@ -334,28 +395,27 @@ export const DirectChatModal: React.FC<DirectChatModalProps> = ({
                           alt={displayName}
                           className="w-10 h-10 rounded-full object-cover border border-[#2B3545]"
                         />
-                        {conv.unreadCount && conv.unreadCount > 0 ? (
-                          <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-emerald-500 text-black text-[10px] font-bold flex items-center justify-center">
-                            {conv.unreadCount}
-                          </span>
-                        ) : null}
+                        <span className="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full bg-emerald-500 border border-[#111b21]" />
                       </div>
 
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center justify-between gap-1">
-                          <p className="text-xs font-bold text-white truncate">{displayName}</p>
+                          <p className="text-xs font-bold text-slate-100 truncate">{displayName}</p>
                           {conv.lastMessageAt && (
-                            <span className="text-[10px] text-gray-500 shrink-0 font-mono">
-                              {new Date(conv.lastMessageAt).toLocaleDateString([], { month: 'short', day: 'numeric' })}
+                            <span className="text-[10px] text-slate-400 shrink-0 font-mono">
+                              {new Date(conv.lastMessageAt).toLocaleTimeString([], {
+                                hour: '2-digit',
+                                minute: '2-digit'
+                              })}
                             </span>
                           )}
                         </div>
-                        <p className="text-[11px] text-gray-400 truncate mt-0.5">
+                        <p className="text-[11px] text-slate-400 truncate mt-0.5">
                           {conv.lastMessage?.content || 'Started conversation'}
                         </p>
                         {conv.inquiryContext?.serviceTitle && (
-                          <span className="inline-block mt-1 px-1.5 py-0.5 rounded bg-emerald-500/10 border border-emerald-500/20 text-[9px] text-emerald-300 font-mono truncate max-w-full">
-                            Pkg: {conv.inquiryContext.serviceTitle}
+                          <span className="inline-block mt-1 px-1.5 py-0.5 rounded bg-emerald-500/15 border border-emerald-500/30 text-[9px] text-emerald-300 font-mono truncate max-w-full">
+                            {conv.inquiryContext.serviceTitle}
                           </span>
                         )}
                       </div>
@@ -367,34 +427,34 @@ export const DirectChatModal: React.FC<DirectChatModalProps> = ({
           </div>
 
           {/* Right Area: Active Chat Window or Inquiry Form */}
-          <div className="flex-1 flex flex-col bg-[#0E121A] min-w-0">
+          <div className="flex-1 flex flex-col bg-[#0b141a] min-w-0">
             {isInquiryMode && targetCreator ? (
               /* Inquiry Setup Form */
               <div className="flex-1 p-6 sm:p-8 overflow-y-auto space-y-6">
                 <div>
                   <span className="text-xs font-mono font-bold text-emerald-400 uppercase tracking-wider">
-                    New Project Inquiry
+                    New Direct Message
                   </span>
                   <h3 className="text-xl font-bold text-white mt-1">
-                    Connect with {targetCreator.displayName}
+                    Chat with {targetCreator.displayName}
                   </h3>
-                  <p className="text-xs text-gray-400 mt-1">
-                    Send an inquiry directly to start a private text conversation. The creator will immediately receive an in-app notification.
+                  <p className="text-xs text-slate-400 mt-1">
+                    Send an inquiry to initiate a WhatsApp-style real-time conversation. The creator receives an in-app notification immediately.
                   </p>
                 </div>
 
                 {initialInquiry && (
-                  <div className="p-4 rounded-xl bg-[#131824] border border-[#232B3C] flex items-center justify-between gap-4">
+                  <div className="p-4 rounded-xl bg-[#121c24] border border-[#202c33] flex items-center justify-between gap-4">
                     <div>
                       <span className="text-[10px] font-bold text-emerald-400 uppercase tracking-wider block">
                         Target Service Package
                       </span>
                       <h4 className="text-sm font-bold text-white mt-0.5">{initialInquiry.serviceTitle}</h4>
-                      <p className="text-xs text-gray-400 capitalize">Tier: {initialInquiry.packageTier || 'Standard'}</p>
+                      <p className="text-xs text-slate-400 capitalize">Tier: {initialInquiry.packageTier || 'Standard'}</p>
                     </div>
                     {initialInquiry.price && (
                       <div className="text-right">
-                        <span className="text-xs text-gray-400 block font-mono">Price</span>
+                        <span className="text-xs text-slate-400 block font-mono">Package Price</span>
                         <span className="text-lg font-extrabold text-emerald-400">
                           ₹{initialInquiry.price.toLocaleString()}
                         </span>
@@ -405,15 +465,15 @@ export const DirectChatModal: React.FC<DirectChatModalProps> = ({
 
                 <form onSubmit={handleSendInquiry} className="space-y-4">
                   <div>
-                    <label className="block text-xs font-semibold text-gray-300 uppercase tracking-wider mb-2 font-mono">
-                      Your Project Message & Requirements
+                    <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-2 font-mono">
+                      Your Message & Campaign Expectations
                     </label>
                     <textarea
                       value={inquiryCustomNote}
                       onChange={(e) => setInquiryCustomNote(e.target.value)}
-                      placeholder={`Hi ${targetCreator.displayName}, we have an upcoming campaign and would love to collaborate with you. Here are our initial requirements and timeline...`}
+                      placeholder={`Hi ${targetCreator.displayName}, we have an upcoming creative brief and would love to collaborate...`}
                       rows={5}
-                      className="w-full bg-[#141924] border border-[#263044] rounded-xl p-3.5 text-sm text-white placeholder-gray-500 focus:outline-none focus:border-emerald-500 transition-colors resize-none"
+                      className="w-full bg-[#111b21] border border-[#202c33] rounded-xl p-3.5 text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-emerald-500 transition-colors resize-none"
                     />
                   </div>
 
@@ -438,8 +498,9 @@ export const DirectChatModal: React.FC<DirectChatModalProps> = ({
                       size="md"
                       isLoading={isSending}
                       rightIcon={<Send className="w-4 h-4" />}
+                      className="bg-emerald-600 hover:bg-emerald-500 border-0"
                     >
-                      Send Inquiry & Start Chat
+                      Send Message & Start Chat
                     </Button>
                   </div>
                 </form>
@@ -448,7 +509,7 @@ export const DirectChatModal: React.FC<DirectChatModalProps> = ({
               /* Active Chat Thread */
               <>
                 {/* Active Partner Header */}
-                <div className="p-3 px-5 border-b border-[#1E2536] bg-[#0C1017] flex items-center justify-between">
+                <div className="p-3 px-5 border-b border-[#202c33] bg-[#202c33] flex items-center justify-between shrink-0">
                   <div className="flex items-center gap-3">
                     <img
                       src={
@@ -457,7 +518,7 @@ export const DirectChatModal: React.FC<DirectChatModalProps> = ({
                         'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80'
                       }
                       alt="Partner"
-                      className="w-9 h-9 rounded-full object-cover border border-[#263044]"
+                      className="w-9 h-9 rounded-full object-cover border border-[#2B3545]"
                     />
                     <div>
                       <h4 className="text-xs font-bold text-white flex items-center gap-2">
@@ -466,41 +527,47 @@ export const DirectChatModal: React.FC<DirectChatModalProps> = ({
                             activeConversation.partner?.name ||
                             'Collaborator'}
                         </span>
-                        <span className="text-[10px] px-1.5 py-0.2 rounded bg-emerald-500/20 text-emerald-400 capitalize font-mono">
+                        <span className="text-[10px] px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-400 capitalize font-mono">
                           {activeConversation.partner?.role || 'Creator'}
                         </span>
                       </h4>
-                      {activeConversation.inquiryContext?.serviceTitle && (
-                        <p className="text-[10px] text-gray-400">
-                          Inquiry: {activeConversation.inquiryContext.serviceTitle}
-                          {activeConversation.inquiryContext.price
-                            ? ` (₹${activeConversation.inquiryContext.price.toLocaleString()})`
-                            : ''}
-                        </p>
-                      )}
+                      <p className="text-[11px] text-emerald-400 font-mono flex items-center gap-1">
+                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                        online
+                      </p>
                     </div>
                   </div>
 
-                  <span className="text-[10px] font-mono text-emerald-400 flex items-center gap-1.5">
-                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping" />
-                    Live Syncing
-                  </span>
+                  <div className="flex items-center gap-2">
+                    {activeConversation.creatorProfile?.id && (
+                      <a
+                        href={`/creators/${activeConversation.creatorProfile.id}`}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-[11px] font-semibold bg-[#2a3942] text-slate-300 hover:text-white transition-colors"
+                      >
+                        <User className="w-3 h-3 text-cyan-400" />
+                        <span>Profile</span>
+                        <ExternalLink className="w-2.5 h-2.5 text-slate-400" />
+                      </a>
+                    )}
+                  </div>
                 </div>
 
                 {/* Messages Thread */}
-                <div className="flex-1 overflow-y-auto p-4 sm:p-5 space-y-3.5">
+                <div className="flex-1 overflow-y-auto p-4 sm:p-5 space-y-3">
                   {isLoadingMessages ? (
-                    <div className="h-full flex items-center justify-center text-xs text-gray-500">
-                      Loading chat messages...
+                    <div className="h-full flex items-center justify-center text-xs text-slate-500">
+                      Loading messages...
                     </div>
                   ) : messages.length === 0 ? (
-                    <div className="h-full flex flex-col items-center justify-center text-center text-gray-500 space-y-2">
-                      <MessageSquare className="w-8 h-8 text-gray-600" />
+                    <div className="h-full flex flex-col items-center justify-center text-center text-slate-500 space-y-2">
+                      <MessageSquare className="w-8 h-8 text-slate-600" />
                       <p className="text-xs">No messages yet. Say hello to get started!</p>
                     </div>
                   ) : (
                     messages.map((msg) => {
-                      const isMe = msg.senderId === user?.id || msg.sender?.id === user?.id;
+                      const isMe = msg.senderId === user?.id || msg.sender?.id === user?.id || msg.sender?.role === 'brand';
 
                       return (
                         <div
@@ -508,17 +575,23 @@ export const DirectChatModal: React.FC<DirectChatModalProps> = ({
                           className={`flex flex-col ${isMe ? 'items-end' : 'items-start'}`}
                         >
                           <div
-                            className={`max-w-[78%] rounded-2xl p-3 px-4 text-xs leading-relaxed ${
+                            className={`max-w-[78%] rounded-2xl p-3 px-4 text-xs leading-relaxed shadow-sm ${
                               isMe
-                                ? 'bg-gradient-to-r from-emerald-600 to-teal-600 text-white rounded-br-none shadow-md'
-                                : 'bg-[#181F2C] border border-[#263145] text-gray-200 rounded-bl-none shadow-sm'
+                                ? 'bg-[#005c4b] text-white rounded-tr-none'
+                                : 'bg-[#202c33] border border-[#2a3942] text-slate-100 rounded-tl-none'
                             }`}
                           >
                             <p className="whitespace-pre-wrap select-text">{msg.content}</p>
+                            <div className="flex items-center justify-end gap-1 mt-1 text-[9px] text-slate-300/80 font-mono">
+                              <span>
+                                {new Date(msg.createdAt).toLocaleTimeString([], {
+                                  hour: '2-digit',
+                                  minute: '2-digit'
+                                })}
+                              </span>
+                              {isMe && <CheckCheck className="w-3.5 h-3.5 text-cyan-300 inline" />}
+                            </div>
                           </div>
-                          <span className="text-[9px] text-gray-500 mt-1 font-mono px-1">
-                            {new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                          </span>
                         </div>
                       );
                     })
@@ -528,7 +601,7 @@ export const DirectChatModal: React.FC<DirectChatModalProps> = ({
 
                 {/* Error Banner */}
                 {error && (
-                  <div className="p-2 px-4 bg-red-950/50 border-t border-red-500/30 text-red-200 text-xs">
+                  <div className="p-2 px-4 bg-red-950/60 border-t border-red-500/30 text-red-200 text-xs shrink-0">
                     {error}
                   </div>
                 )}
@@ -536,36 +609,33 @@ export const DirectChatModal: React.FC<DirectChatModalProps> = ({
                 {/* Message Input Bar */}
                 <form
                   onSubmit={handleSendMessage}
-                  className="p-3 px-4 border-t border-[#1E2536] bg-[#0A0D14] flex items-center gap-2"
+                  className="p-3 px-4 border-t border-[#202c33] bg-[#202c33] flex items-center gap-2 shrink-0"
                 >
                   <input
                     type="text"
                     value={inputText}
                     onChange={(e) => setInputText(e.target.value)}
-                    placeholder="Type a message to chat in real time..."
-                    className="flex-1 bg-[#141924] border border-[#263044] rounded-xl px-4 py-2.5 text-xs text-white placeholder-gray-500 focus:outline-none focus:border-emerald-500 transition-colors"
+                    placeholder="Type a message..."
+                    className="flex-1 bg-[#2a3942] border-none rounded-xl px-4 py-2.5 text-xs text-white placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-emerald-500 transition-colors"
                   />
-                  <Button
+                  <button
                     type="submit"
-                    variant="primary"
-                    size="sm"
                     disabled={!inputText.trim() || isSending}
-                    isLoading={isSending}
-                    className="px-4"
+                    className="w-10 h-10 rounded-xl bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white flex items-center justify-center transition-all shrink-0"
                   >
-                    <Send className="w-3.5 h-3.5" />
-                  </Button>
+                    <Send className="w-4 h-4 ml-0.5" />
+                  </button>
                 </form>
               </>
             ) : (
-              <div className="flex-1 flex flex-col items-center justify-center p-8 text-center text-gray-500 space-y-3">
-                <div className="w-12 h-12 rounded-2xl bg-gray-900 border border-gray-800 flex items-center justify-center text-gray-400">
-                  <MessageSquare className="w-6 h-6" />
+              <div className="flex-1 flex flex-col items-center justify-center p-8 text-center text-slate-500 space-y-3">
+                <div className="w-14 h-14 rounded-2xl bg-[#202c33] flex items-center justify-center text-emerald-400 border border-[#2a3942]">
+                  <MessageSquare className="w-7 h-7" />
                 </div>
                 <div>
-                  <h4 className="text-sm font-bold text-gray-300">Select a Conversation</h4>
-                  <p className="text-xs text-gray-500 mt-1 max-w-xs">
-                    Choose a conversation from the left or inquire on a creator profile to text in real time.
+                  <h4 className="text-sm font-bold text-slate-200">Select a Conversation</h4>
+                  <p className="text-xs text-slate-400 mt-1 max-w-xs">
+                    Choose a conversation from the left to start texting in real time.
                   </p>
                 </div>
               </div>
@@ -573,6 +643,7 @@ export const DirectChatModal: React.FC<DirectChatModalProps> = ({
           </div>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 };

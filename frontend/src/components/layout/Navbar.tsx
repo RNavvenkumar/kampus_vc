@@ -135,7 +135,8 @@ export const Navbar: React.FC = () => {
   const dashboardPath = user?.role === 'creator' ? '/creator/dashboard' : '/brand/dashboard';
 
   return (
-    <header className="sticky top-0 z-50 w-full backdrop-blur-md bg-background/80 border-b border-border/80 transition-all">
+    <>
+      <header className="sticky top-0 z-50 w-full backdrop-blur-md bg-background/80 border-b border-border/80 transition-all">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
         {/* Brand Logo */}
         <Link to="/" className="flex items-center gap-3 group">
@@ -526,7 +527,8 @@ export const Navbar: React.FC = () => {
         </div>
       )}
 
-      {/* Global Direct Chat Modal */}
+      </header>
+      {/* Global Direct Chat Modal mounted outside sticky header */}
       <DirectChatModal
         isOpen={chatModalOpen}
         onClose={() => {
@@ -535,6 +537,6 @@ export const Navbar: React.FC = () => {
         }}
         initialConversationId={chatConversationId}
       />
-    </header>
+    </>
   );
 };

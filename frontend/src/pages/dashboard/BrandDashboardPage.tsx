@@ -30,12 +30,15 @@ import {
   LayoutDashboard
 } from 'lucide-react';
 
+import { DirectChatModal } from '../../components/chat/DirectChatModal';
+
 export const BrandDashboardPage: React.FC = () => {
   const { user, brandProfile } = useAuth();
   const [searchParams, setSearchParams] = useSearchParams();
   const initialTab = searchParams.get('tab') === 'messages' ? 'messages' : 'overview';
 
   const [activeTab, setActiveTab] = useState<'overview' | 'messages'>(initialTab);
+  const [isChatPopupOpen, setIsChatPopupOpen] = useState(false);
   const [briefs, setBriefs] = useState<CampaignBrief[]>([]);
   const [stats, setStats] = useState<BriefStats>({
     total: 0,
@@ -74,6 +77,9 @@ export const BrandDashboardPage: React.FC = () => {
   const switchTab = (tab: 'overview' | 'messages') => {
     setActiveTab(tab);
     setSearchParams(tab === 'messages' ? { tab: 'messages' } : {});
+    if (tab === 'messages') {
+      window.scrollTo({ top: 120, behavior: 'smooth' });
+    }
   };
 
   // Fetch Dashboard Briefs
@@ -253,6 +259,15 @@ export const BrandDashboardPage: React.FC = () => {
             className={activeTab === 'messages' ? 'bg-emerald-600 hover:bg-emerald-500 text-white border-0 shadow-lg shadow-emerald-500/20' : ''}
           >
             Messages {totalUnread > 0 && <span className="ml-1.5 px-2 py-0.5 rounded-full text-[11px] bg-emerald-500 text-white font-bold">{totalUnread}</span>}
+          </Button>
+          <Button
+            variant="outline"
+            size="md"
+            leftIcon={<ExternalLink className="w-4 h-4 text-emerald-400" />}
+            onClick={() => setIsChatPopupOpen(true)}
+            title="Open centered popup messenger window"
+          >
+            Popup Chat
           </Button>
           <Link to="/brand/creative-studio">
             <Button variant="outline" size="md" leftIcon={<Sparkles className="w-4 h-4 text-accent animate-pulse" />}>
@@ -799,6 +814,12 @@ export const BrandDashboardPage: React.FC = () => {
           </div>
         </div>
       )}
+
+      {/* Centered Popup Chat Modal */}
+      <DirectChatModal
+        isOpen={isChatPopupOpen}
+        onClose={() => setIsChatPopupOpen(false)}
+      />
 
     </div>
   );
