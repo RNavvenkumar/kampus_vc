@@ -50,6 +50,14 @@ export const apiClient = axios.create({
   timeout: 10000,
 });
 
+apiClient.interceptors.request.use((config) => {
+  const token = localStorage.getItem('kampus_session_token');
+  if (token && config.headers) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  return config;
+});
+
 export interface ApiErrorResponse {
   error: {
     code: string;
@@ -109,6 +117,9 @@ export async function registerUser(payload: {
     '/auth/register',
     payload
   );
+  if (response.data.data?.sessionToken) {
+    localStorage.setItem('kampus_session_token', response.data.data.sessionToken);
+  }
   return response.data.data;
 }
 
@@ -120,6 +131,9 @@ export async function loginUser(payload: {
     '/auth/login',
     payload
   );
+  if (response.data.data?.sessionToken) {
+    localStorage.setItem('kampus_session_token', response.data.data.sessionToken);
+  }
   return response.data.data;
 }
 
@@ -131,11 +145,18 @@ export async function googleAuthUser(payload: {
     '/auth/google',
     payload
   );
+  if (response.data.data?.sessionToken) {
+    localStorage.setItem('kampus_session_token', response.data.data.sessionToken);
+  }
   return response.data.data;
 }
 
 export async function logoutUser(): Promise<void> {
-  await apiClient.post('/auth/logout');
+  try {
+    await apiClient.post('/auth/logout');
+  } finally {
+    localStorage.removeItem('kampus_session_token');
+  }
 }
 
 export async function getCurrentUser(): Promise<{

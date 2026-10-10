@@ -87,20 +87,22 @@ export async function invalidateAllUserSessions(
 
 export function setSessionCookie(res: Response, rawToken: string): void {
   const maxAge = env.SESSION_TTL_HOURS * 60 * 60 * 1000;
+  const isProd = env.COOKIE_SECURE || env.NODE_ENV === 'production';
   res.cookie(env.SESSION_COOKIE_NAME, rawToken, {
     httpOnly: true,
-    secure: env.COOKIE_SECURE || env.NODE_ENV === 'production',
-    sameSite: 'lax',
+    secure: isProd,
+    sameSite: isProd ? 'none' : 'lax',
     path: '/',
     maxAge
   });
 }
 
 export function clearSessionCookie(res: Response): void {
+  const isProd = env.COOKIE_SECURE || env.NODE_ENV === 'production';
   res.clearCookie(env.SESSION_COOKIE_NAME, {
     httpOnly: true,
-    secure: env.COOKIE_SECURE || env.NODE_ENV === 'production',
-    sameSite: 'lax',
+    secure: isProd,
+    sameSite: isProd ? 'none' : 'lax',
     path: '/'
   });
 }
