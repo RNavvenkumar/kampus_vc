@@ -6,6 +6,10 @@ import { ProjectSubmission, ISubmissionAttachment } from '../models/ProjectSubmi
 import { ProjectMessage, IMessageAttachment } from '../models/ProjectMessage.js';
 import { ProjectActivity, ProjectActivityType } from '../models/ProjectActivity.js';
 import { MediaAsset } from '../models/MediaAsset.js';
+import { Review } from '../models/Review.js';
+import { CreatorProfile } from '../models/CreatorProfile.js';
+import { BrandProfile } from '../models/BrandProfile.js';
+import { User } from '../models/User.js';
 import { createNotification } from '../services/notificationService.js';
 import { storageService } from '../storage/storageService.js';
 
@@ -627,7 +631,9 @@ export async function getMilestoneSubmissions(req: Request, res: Response, next:
 
 const reviewSubmissionSchema = z.object({
   action: z.enum(['approve', 'request_revision']),
-  feedback: z.string().trim().max(3000).optional()
+  feedback: z.string().trim().max(3000).optional(),
+  rating: z.number().min(1).max(5).optional(),
+  review: z.string().trim().max(2000).optional()
 });
 
 // POST /api/projects/:projectId/submissions/:submissionId/review
@@ -667,7 +673,7 @@ export async function reviewSubmission(req: Request, res: Response, next: NextFu
       return;
     }
 
-    const { action, feedback } = parseResult.data;
+    const { action, feedback, rating, review: reviewComment } = parseResult.data;
 
     // Requirement: Require a meaningful feedback message for revision requests.
     if (action === 'request_revision' && (!feedback || feedback.trim().length < 5)) {
@@ -749,14 +755,67 @@ export async function reviewSubmission(req: Request, res: Response, next: NextFu
       });
     } else if (action === 'approve') {
       submission.status = 'approved';
-      submission.reviewFeedback = feedback || '';
+      submission.reviewFeedback = reviewComment || feedback || '';
       submission.reviewedBy = req.user!._id;
       submission.reviewedAt = new Date();
       await submission.save();
 
       milestone.status = 'approved';
       milestone.approvedAt = new Date();
+
+      // Check if all milestones are now approved
+      const allApproved = project.milestones.every((m: any) =>
+        (m._id?.toString() === milestone._id?.toString()) || m.status === 'approved'
+      );
+      if (allApproved && project.status !== 'completed') {
+        project.status = 'completed';
+      }
       await project.save();
+
+      // Record Review & Rating if rating or feedback provided
+      const ratingValue = rating || 5;
+      const reviewText = reviewComment || feedback || 'Deliverable verified and approved successfully!';
+
+      const brandUser = req.user!;
+      const brandProfile = await BrandProfile.findOne({ userId: brandUser._id }).lean();
+      const creatorUser = await User.findById(creatorId).lean();
+
+      const brandName = brandProfile?.companyName || brandUser.name || 'Brand Client';
+      const brandAvatar = brandProfile?.logoUrl || (brandUser as any).avatarUrl;
+      const creatorName = creatorUser?.name || 'Creator';
+      const creatorAvatar = (creatorUser as any)?.avatarUrl;
+
+      await Review.findOneAndUpdate(
+        {
+          projectId: project._id,
+          milestoneId: milestone._id || (milestone as any).id
+        },
+        {
+          projectId: project._id,
+          milestoneId: milestone._id || (milestone as any).id,
+          brandId: brandUser._id,
+          creatorId: creatorId,
+          rating: ratingValue,
+          review: reviewText,
+          projectTitle: project.title,
+          brandName,
+          brandAvatar,
+          creatorName,
+          creatorAvatar
+        },
+        { upsert: true, new: true }
+      );
+
+      // Recalculate CreatorProfile average rating and reviewCount
+      const allReviews = await Review.find({ creatorId }).lean();
+      if (allReviews.length > 0) {
+        const sumRatings = allReviews.reduce((sum, r) => sum + r.rating, 0);
+        const avgRating = Number((sumRatings / allReviews.length).toFixed(1));
+        await CreatorProfile.findOneAndUpdate(
+          { userId: creatorId },
+          { averageRating: avgRating, reviewCount: allReviews.length }
+        );
+      }
 
       await logProjectActivity({
         projectId: project._id as Types.ObjectId,
@@ -764,11 +823,12 @@ export async function reviewSubmission(req: Request, res: Response, next: NextFu
         actorRole: 'brand',
         eventType: 'deliverable_approved',
         title: 'Deliverable Approved',
-        description: `Brand approved Deliverable v${submission.version} for "${milestone.title}".`,
+        description: `Brand approved Deliverable v${submission.version} for "${milestone.title}" with a rating of ${ratingValue}/5.`,
         metadata: {
           milestoneId: milestone._id?.toString(),
           milestoneTitle: milestone.title,
-          version: submission.version
+          version: submission.version,
+          rating: ratingValue
         }
       });
 
@@ -776,7 +836,7 @@ export async function reviewSubmission(req: Request, res: Response, next: NextFu
         recipientId: creatorId,
         type: 'deliverable_approved',
         title: 'Deliverable Approved! 🎉',
-        message: `Your deliverable for "${milestone.title}" has been approved.`,
+        message: `Your deliverable for "${milestone.title}" has been approved with a ${ratingValue}★ rating!`,
         projectId: project._id as Types.ObjectId
       });
     }
@@ -1081,6 +1141,240 @@ export async function getProjectFiles(req: Request, res: Response, next: NextFun
     res.status(200).json({
       success: true,
       data: filesWithUrls
+    });
+  } catch (err) {
+    next(err);
+  }
+}
+
+// -------------------------------------------------------------
+// 6. Project Reviews, Ratings & Collaboration History
+// -------------------------------------------------------------
+
+// POST /api/projects/:projectId/review
+export async function submitProjectReview(req: Request, res: Response, next: NextFunction): Promise<void> {
+  try {
+    const auth = await getAuthorizedProject(req.params.projectId, req.user!._id);
+    if (!auth) {
+      res.status(404).json({
+        error: { code: 'PROJECT_NOT_FOUND', message: 'Project not found or access denied.' }
+      });
+      return;
+    }
+
+    const { project, isBrand } = auth;
+    if (!isBrand) {
+      res.status(403).json({
+        error: { code: 'FORBIDDEN', message: 'Only the brand client can submit project ratings & reviews.' }
+      });
+      return;
+    }
+
+    const reviewSchema = z.object({
+      rating: z.number().min(1).max(5),
+      review: z.string().trim().min(2, 'Review must be at least 2 characters').max(2000)
+    });
+
+    const parseResult = reviewSchema.safeParse(req.body);
+    if (!parseResult.success) {
+      res.status(400).json({
+        error: { code: 'VALIDATION_ERROR', message: parseResult.error.errors[0]?.message || 'Invalid rating or review.' }
+      });
+      return;
+    }
+
+    const { rating, review: reviewText } = parseResult.data;
+    const creatorId = (project.creatorId as any)._id || project.creatorId;
+    const brandUser = req.user!;
+    const brandProfile = await BrandProfile.findOne({ userId: brandUser._id }).lean();
+    const creatorUser = await User.findById(creatorId).lean();
+
+    const brandName = brandProfile?.companyName || brandUser.name || 'Brand Client';
+    const brandAvatar = brandProfile?.logoUrl || (brandUser as any).avatarUrl;
+    const creatorName = creatorUser?.name || 'Creator';
+    const creatorAvatar = (creatorUser as any)?.avatarUrl;
+
+    const savedReview = await Review.findOneAndUpdate(
+      { projectId: project._id },
+      {
+        projectId: project._id,
+        brandId: brandUser._id,
+        creatorId: creatorId,
+        rating,
+        review: reviewText,
+        projectTitle: project.title,
+        brandName,
+        brandAvatar,
+        creatorName,
+        creatorAvatar
+      },
+      { upsert: true, new: true }
+    );
+
+    // Recalculate Creator average rating & count
+    const allReviews = await Review.find({ creatorId }).lean();
+    if (allReviews.length > 0) {
+      const sumRatings = allReviews.reduce((sum, r) => sum + r.rating, 0);
+      const avgRating = Number((sumRatings / allReviews.length).toFixed(1));
+      await CreatorProfile.findOneAndUpdate(
+        { userId: creatorId },
+        { averageRating: avgRating, reviewCount: allReviews.length }
+      );
+    }
+
+    res.status(200).json({
+      success: true,
+      data: savedReview
+    });
+  } catch (err) {
+    next(err);
+  }
+}
+
+// GET /api/projects/history
+export async function getProjectHistory(req: Request, res: Response, next: NextFunction): Promise<void> {
+  try {
+    const userId = req.user!._id;
+
+    const query: Record<string, any> = {
+      $or: [{ brandId: userId }, { creatorId: userId }]
+    };
+
+    const projects = await Project.find(query)
+      .sort({ updatedAt: -1 })
+      .populate('creatorId', 'name email avatarUrl username')
+      .populate('brandId', 'name email avatarUrl')
+      .populate('briefId', 'title slug companyName category')
+      .lean();
+
+    const historyItems = await Promise.all(
+      projects.map(async (proj: any) => {
+        const review = await Review.findOne({ projectId: proj._id }).sort({ createdAt: -1 }).lean();
+        const brandProfile = await BrandProfile.findOne({ userId: proj.brandId?._id || proj.brandId }).lean();
+        const creatorProfile = await CreatorProfile.findOne({ userId: proj.creatorId?._id || proj.creatorId }).lean();
+
+        return {
+          id: proj._id.toString(),
+          projectId: proj._id.toString(),
+          projectReference: proj.projectReference,
+          title: proj.title,
+          status: proj.status,
+          agreedPrice: proj.agreedPrice,
+          currency: proj.currency,
+          completedAt: proj.updatedAt,
+          createdAt: proj.createdAt,
+          brand: {
+            id: (proj.brandId?._id || proj.brandId)?.toString(),
+            name: brandProfile?.companyName || proj.brandId?.name || 'Brand Client',
+            avatar: brandProfile?.logoUrl || proj.brandId?.avatarUrl,
+            industry: brandProfile?.industry
+          },
+          creator: {
+            id: (proj.creatorId?._id || proj.creatorId)?.toString(),
+            name: creatorProfile?.displayName || proj.creatorId?.name || 'Creator',
+            username: creatorProfile?.username,
+            avatar: creatorProfile?.avatarUrl || proj.creatorId?.avatarUrl,
+            headline: creatorProfile?.headline
+          },
+          rating: review ? review.rating : undefined,
+          review: review ? review.review : undefined,
+          reviewedAt: review ? review.createdAt : undefined
+        };
+      })
+    );
+
+    res.status(200).json({
+      success: true,
+      data: historyItems
+    });
+  } catch (err) {
+    next(err);
+  }
+}
+
+// GET /api/creators/:creatorId/reviews
+export async function getCreatorReviews(req: Request, res: Response, next: NextFunction): Promise<void> {
+  try {
+    const idOrUsername = Array.isArray(req.params.creatorId) ? req.params.creatorId[0] : req.params.creatorId;
+
+    let targetUserId: any = null;
+    if (mongoose.Types.ObjectId.isValid(idOrUsername)) {
+      const profile = await CreatorProfile.findOne({
+        $or: [{ _id: idOrUsername }, { userId: idOrUsername }]
+      }).lean();
+      if (profile) {
+        targetUserId = profile.userId;
+      } else {
+        targetUserId = idOrUsername;
+      }
+    } else {
+      const profile = await CreatorProfile.findOne({ username: idOrUsername.toLowerCase() }).lean();
+      if (profile) {
+        targetUserId = profile.userId;
+      }
+    }
+
+    if (!targetUserId) {
+      res.status(404).json({
+        error: { code: 'CREATOR_NOT_FOUND', message: 'Creator not found.' }
+      });
+      return;
+    }
+
+    const reviews = await Review.find({ creatorId: targetUserId })
+      .sort({ createdAt: -1 })
+      .limit(5)
+      .lean();
+
+    const allReviews = await Review.find({ creatorId: targetUserId }).select('rating').lean();
+    const count = allReviews.length;
+    const avg = count > 0
+      ? Number((allReviews.reduce((sum, r) => sum + r.rating, 0) / count).toFixed(1))
+      : 5.0;
+
+    res.status(200).json({
+      success: true,
+      data: {
+        averageRating: avg,
+        reviewCount: count,
+        reviews: reviews.map((r: any) => ({
+          id: r._id.toString(),
+          projectId: r.projectId?.toString(),
+          rating: r.rating,
+          review: r.review,
+          projectTitle: r.projectTitle,
+          brandName: r.brandName,
+          brandAvatar: r.brandAvatar,
+          createdAt: r.createdAt
+        }))
+      }
+    });
+  } catch (err) {
+    next(err);
+  }
+}
+
+// GET /api/brand/reviews
+export async function getBrandReviews(req: Request, res: Response, next: NextFunction): Promise<void> {
+  try {
+    const brandId = req.user!._id;
+    const reviews = await Review.find({ brandId })
+      .sort({ createdAt: -1 })
+      .limit(20)
+      .lean();
+
+    res.status(200).json({
+      success: true,
+      data: reviews.map((r: any) => ({
+        id: r._id.toString(),
+        projectId: r.projectId?.toString(),
+        rating: r.rating,
+        review: r.review,
+        projectTitle: r.projectTitle,
+        creatorName: r.creatorName,
+        creatorAvatar: r.creatorAvatar,
+        createdAt: r.createdAt
+      }))
     });
   } catch (err) {
     next(err);

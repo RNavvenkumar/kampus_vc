@@ -102,6 +102,9 @@ export interface CreatorProfile {
   availability: 'available' | 'limited' | 'busy';
   availabilityNote?: string;
   availableFromDate?: string;
+  averageRating?: number;
+  reviewCount?: number;
+  reviews?: ReviewItem[];
   portfolioItems: PortfolioItem[];
   services: ServiceItem[];
   profileVisibility: 'public' | 'unlisted' | 'private';
@@ -110,6 +113,47 @@ export interface CreatorProfile {
   isDemonstration?: boolean;
   createdAt?: string;
   updatedAt?: string;
+}
+
+export interface ReviewItem {
+  id: string;
+  projectId?: string;
+  rating: number;
+  review: string;
+  projectTitle?: string;
+  brandName?: string;
+  brandAvatar?: string;
+  creatorName?: string;
+  creatorAvatar?: string;
+  createdAt: string;
+}
+
+export interface ProjectHistoryItem {
+  id: string;
+  projectId: string;
+  projectReference?: string;
+  title: string;
+  status: string;
+  agreedPrice: number;
+  currency: string;
+  completedAt?: string;
+  createdAt: string;
+  brand: {
+    id?: string;
+    name: string;
+    avatar?: string;
+    industry?: string;
+  };
+  creator: {
+    id?: string;
+    name: string;
+    username?: string;
+    avatar?: string;
+    headline?: string;
+  };
+  rating?: number;
+  review?: string;
+  reviewedAt?: string;
 }
 
 export interface BrandProfile {

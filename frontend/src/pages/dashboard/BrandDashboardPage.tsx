@@ -1,12 +1,13 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
-import { CampaignBrief, BriefStats, Conversation, DirectMessage } from '../../types';
+import { CampaignBrief, BriefStats, Conversation, DirectMessage, ProjectHistoryItem } from '../../types';
 import {
   getMyBrandBriefs,
   getMyConversations,
   getConversationMessages,
-  sendDirectMessage
+  sendDirectMessage,
+  getProjectHistory
 } from '../../services/api';
 import { Card } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
@@ -27,7 +28,10 @@ import {
   ArrowLeft,
   RefreshCw,
   ExternalLink,
-  LayoutDashboard
+  LayoutDashboard,
+  History,
+  Star,
+  Award
 } from 'lucide-react';
 
 import { DirectChatModal } from '../../components/chat/DirectChatModal';
@@ -35,9 +39,12 @@ import { DirectChatModal } from '../../components/chat/DirectChatModal';
 export const BrandDashboardPage: React.FC = () => {
   const { user, brandProfile } = useAuth();
   const [searchParams, setSearchParams] = useSearchParams();
-  const initialTab = searchParams.get('tab') === 'messages' ? 'messages' : 'overview';
+  const tabParam = searchParams.get('tab');
+  const initialTab = tabParam === 'messages' ? 'messages' : tabParam === 'history' ? 'history' : 'overview';
 
-  const [activeTab, setActiveTab] = useState<'overview' | 'messages'>(initialTab);
+  const [activeTab, setActiveTab] = useState<'overview' | 'messages' | 'history'>(initialTab);
+  const [historyItems, setHistoryItems] = useState<ProjectHistoryItem[]>([]);
+  const [isLoadingHistory, setIsLoadingHistory] = useState(false);
   const [isChatPopupOpen, setIsChatPopupOpen] = useState(false);
   const [briefs, setBriefs] = useState<CampaignBrief[]>([]);
   const [stats, setStats] = useState<BriefStats>({
@@ -66,18 +73,36 @@ export const BrandDashboardPage: React.FC = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
 
+  const loadProjectHistory = async () => {
+    try {
+      setIsLoadingHistory(true);
+      const data = await getProjectHistory();
+      setHistoryItems(data || []);
+    } catch (e) {
+      console.error('Failed to load project history', e);
+    } finally {
+      setIsLoadingHistory(false);
+    }
+  };
+
   // Sync tab with URL
   useEffect(() => {
-    const tabParam = searchParams.get('tab');
-    if (tabParam === 'messages' && activeTab !== 'messages') {
+    const tab = searchParams.get('tab');
+    if (tab === 'messages' && activeTab !== 'messages') {
       setActiveTab('messages');
+    } else if (tab === 'history' && activeTab !== 'history') {
+      setActiveTab('history');
+      loadProjectHistory();
     }
   }, [searchParams]);
 
-  const switchTab = (tab: 'overview' | 'messages') => {
+  const switchTab = (tab: 'overview' | 'messages' | 'history') => {
     setActiveTab(tab);
-    setSearchParams(tab === 'messages' ? { tab: 'messages' } : {});
-    if (tab === 'messages') {
+    setSearchParams(tab === 'overview' ? {} : { tab });
+    if (tab === 'history') {
+      loadProjectHistory();
+      window.scrollTo({ top: 120, behavior: 'smooth' });
+    } else if (tab === 'messages') {
       window.scrollTo({ top: 120, behavior: 'smooth' });
     }
   };
@@ -252,6 +277,15 @@ export const BrandDashboardPage: React.FC = () => {
 
         <div className="flex flex-wrap items-center gap-3">
           <Button
+            variant={activeTab === 'history' ? 'primary' : 'secondary'}
+            size="md"
+            leftIcon={<History className="w-4 h-4 text-amber-400" />}
+            onClick={() => switchTab('history')}
+            className={activeTab === 'history' ? 'bg-amber-600 hover:bg-amber-500 text-white border-0 shadow-lg shadow-amber-500/20' : ''}
+          >
+            History & Reviews
+          </Button>
+          <Button
             variant={activeTab === 'messages' ? 'primary' : 'secondary'}
             size="md"
             leftIcon={<MessageSquare className="w-4 h-4 text-emerald-400" />}
@@ -294,6 +328,18 @@ export const BrandDashboardPage: React.FC = () => {
         >
           <LayoutDashboard className="w-4 h-4" />
           <span>Overview & Briefs</span>
+        </button>
+
+        <button
+          onClick={() => switchTab('history')}
+          className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold transition-all ${
+            activeTab === 'history'
+              ? 'bg-amber-500/15 text-amber-400 border border-amber-500/30 shadow-sm'
+              : 'text-text-muted hover:text-text-primary hover:bg-surface-elevated/40'
+          }`}
+        >
+          <History className="w-4 h-4" />
+          <span>Collaboration History</span>
         </button>
 
         <button
@@ -812,6 +858,246 @@ export const BrandDashboardPage: React.FC = () => {
               </div>
             </Card>
           </div>
+        </div>
+      )}
+
+      {/* ========================================================= */}
+      {/* SECTION 3: COLLABORATION HISTORY & REVIEWS                */}
+      {/* ========================================================= */}
+      {activeTab === 'history' && (
+        <div className="space-y-8 animate-fadeIn">
+          {/* History Header & Summary */}
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div>
+              <h2 className="text-2xl font-bold text-text-primary font-display flex items-center gap-2">
+                <History className="w-6 h-6 text-amber-400" /> Creator Collaboration History
+              </h2>
+              <p className="text-xs text-text-secondary mt-1">
+                Maintain and track every creator you have worked with, milestones approved, and reviews given.
+              </p>
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              leftIcon={<RefreshCw className={`w-3.5 h-3.5 ${isLoadingHistory ? 'animate-spin' : ''}`} />}
+              onClick={loadProjectHistory}
+              disabled={isLoadingHistory}
+            >
+              Refresh History
+            </Button>
+          </div>
+
+          {/* Metrics Row */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <Card variant="elevated" className="p-4 border-border">
+              <span className="text-xs font-semibold uppercase text-text-muted font-mono block mb-1">
+                Total Collaborations
+              </span>
+              <div className="text-2xl font-bold text-text-primary font-display">
+                {historyItems.length} Projects
+              </div>
+            </Card>
+
+            <Card variant="elevated" className="p-4 border-border">
+              <span className="text-xs font-semibold uppercase text-text-muted font-mono block mb-1">
+                Reviews Submitted
+              </span>
+              <div className="text-2xl font-bold text-text-primary font-display flex items-center gap-2">
+                <Award className="w-5 h-5 text-amber-400" />
+                <span>{historyItems.filter((h) => h.rating).length}</span>
+              </div>
+            </Card>
+
+            <Card variant="elevated" className="p-4 border-border">
+              <span className="text-xs font-semibold uppercase text-text-muted font-mono block mb-1">
+                Average Rating Given
+              </span>
+              <div className="text-2xl font-bold text-amber-400 font-display flex items-center gap-1.5">
+                <Star className="w-5 h-5 fill-amber-400 text-amber-400" />
+                <span>
+                  {historyItems.filter((h) => h.rating).length > 0
+                    ? (
+                        historyItems
+                          .filter((h) => h.rating)
+                          .reduce((acc, h) => acc + (h.rating || 0), 0) /
+                        historyItems.filter((h) => h.rating).length
+                      ).toFixed(1)
+                    : '5.0'}{' '}
+                  <span className="text-xs text-text-muted font-normal">/ 5.0</span>
+                </span>
+              </div>
+            </Card>
+
+            <Card variant="elevated" className="p-4 border-border">
+              <span className="text-xs font-semibold uppercase text-text-muted font-mono block mb-1">
+                Total Paid (INR)
+              </span>
+              <div className="text-2xl font-bold text-emerald-400 font-display">
+                ₹
+                {historyItems
+                  .reduce((sum, h) => sum + (h.agreedPrice || 0), 0)
+                  .toLocaleString('en-IN')}
+              </div>
+            </Card>
+          </div>
+
+          {/* Collaborations List */}
+          {isLoadingHistory ? (
+            <div className="p-16 text-center">
+              <RefreshCw className="w-8 h-8 text-accent animate-spin mx-auto mb-3" />
+              <p className="text-sm text-text-muted">Loading collaboration records...</p>
+            </div>
+          ) : historyItems.length === 0 ? (
+            <Card variant="elevated" className="p-12 text-center border-border space-y-4">
+              <div className="w-14 h-14 rounded-2xl bg-surface-muted flex items-center justify-center mx-auto text-amber-400">
+                <History className="w-7 h-7" />
+              </div>
+              <h3 className="text-lg font-bold text-text-primary font-display">No Collaboration History Yet</h3>
+              <p className="text-xs text-text-secondary max-w-md mx-auto">
+                When you collaborate with creators, approve deliverables, and leave ratings, your complete history will be preserved here.
+              </p>
+              <div className="flex items-center justify-center gap-3 pt-2">
+                <Link to="/explore">
+                  <Button variant="primary" size="sm" leftIcon={<Search className="w-4 h-4" />}>
+                    Explore Creators
+                  </Button>
+                </Link>
+                <Link to="/brand/briefs/new">
+                  <Button variant="outline" size="sm" leftIcon={<Plus className="w-4 h-4" />}>
+                    Post New Brief
+                  </Button>
+                </Link>
+              </div>
+            </Card>
+          ) : (
+            <div className="space-y-4">
+              {historyItems.map((item) => (
+                <Card
+                  key={item.id}
+                  variant="elevated"
+                  className="p-6 border-border hover:border-accent/40 transition-all rounded-2xl space-y-4 bg-surface-elevated/40"
+                >
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-border/60 pb-4">
+                    {/* Creator Identity */}
+                    <div className="flex items-center gap-3">
+                      <img
+                        src={
+                          item.creator.avatar ||
+                          'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80'
+                        }
+                        alt={item.creator.name}
+                        className="w-12 h-12 rounded-xl object-cover border border-border"
+                      />
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <h4 className="text-base font-bold text-text-primary font-display">
+                            {item.creator.name}
+                          </h4>
+                          {item.creator.username && (
+                            <span className="text-xs font-mono text-text-muted">
+                              @{item.creator.username}
+                            </span>
+                          )}
+                        </div>
+                        <p className="text-xs text-text-secondary">
+                          {item.creator.headline || 'Creative Talent'}
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Status & Price */}
+                    <div className="flex items-center gap-3 self-start sm:self-auto">
+                      <div className="text-right">
+                        <span className="text-xs font-mono text-text-muted block">Agreed Budget</span>
+                        <span className="text-lg font-black text-emerald-400 font-display">
+                          ₹{item.agreedPrice.toLocaleString('en-IN')}
+                        </span>
+                      </div>
+                      <Badge
+                        variant={item.status === 'completed' ? 'success' : 'cyan'}
+                        size="md"
+                      >
+                        {item.status.replace(/_/g, ' ').toUpperCase()}
+                      </Badge>
+                    </div>
+                  </div>
+
+                  {/* Project Info & Dates */}
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs text-text-muted">
+                    <div>
+                      <span className="text-text-primary font-semibold">{item.title}</span>
+                      {item.projectReference && (
+                        <span className="ml-2 font-mono text-text-muted">({item.projectReference})</span>
+                      )}
+                    </div>
+                    <div>
+                      Completed:{' '}
+                      <span className="text-text-secondary font-mono">
+                        {new Date(item.completedAt || item.createdAt).toLocaleDateString()}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Rating & Review Section */}
+                  {item.rating ? (
+                    <div className="p-4 rounded-xl bg-surface-muted/70 border border-amber-500/20 space-y-2">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-1.5">
+                          {[1, 2, 3, 4, 5].map((s) => (
+                            <Star
+                              key={s}
+                              className={`w-4 h-4 ${
+                                s <= item.rating!
+                                  ? 'fill-amber-400 text-amber-400'
+                                  : 'text-gray-600'
+                              }`}
+                            />
+                          ))}
+                          <span className="text-xs font-bold text-amber-400 ml-1.5">
+                            {item.rating}.0 / 5.0 Rating Given
+                          </span>
+                        </div>
+                        {item.reviewedAt && (
+                          <span className="text-[11px] text-text-muted font-mono">
+                            Reviewed on {new Date(item.reviewedAt).toLocaleDateString()}
+                          </span>
+                        )}
+                      </div>
+
+                      {item.review && (
+                        <p className="text-xs text-gray-200 italic leading-relaxed pt-1">
+                          "{item.review}"
+                        </p>
+                      )}
+                    </div>
+                  ) : (
+                    <div className="p-3 rounded-xl bg-surface-muted/40 border border-border text-xs text-text-muted flex items-center justify-between">
+                      <span>No rating recorded for this project yet.</span>
+                      <Link to={`/projects/${item.projectId}`} className="text-accent hover:underline font-semibold">
+                        Review Deliverable →
+                      </Link>
+                    </div>
+                  )}
+
+                  {/* Action Links */}
+                  <div className="flex items-center justify-end gap-3 pt-2">
+                    <Link to={`/projects/${item.projectId}`}>
+                      <Button variant="secondary" size="sm">
+                        Open Workspace
+                      </Button>
+                    </Link>
+                    {item.creator.username && (
+                      <Link to={`/creators/${item.creator.username}`}>
+                        <Button variant="outline" size="sm" rightIcon={<ExternalLink className="w-3.5 h-3.5" />}>
+                          Creator Profile
+                        </Button>
+                      </Link>
+                    )}
+                  </div>
+                </Card>
+              ))}
+            </div>
+          )}
         </div>
       )}
 

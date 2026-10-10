@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { X, CheckCircle2, AlertTriangle, Paperclip, ExternalLink, Download } from 'lucide-react';
+import { X, CheckCircle2, AlertTriangle, Paperclip, ExternalLink, Download, Star } from 'lucide-react';
 import { DeliverableSubmission } from '../../types';
 import { reviewSubmission, extractErrorMessage } from '../../services/api';
 import { Button } from '../ui/Button';
@@ -24,6 +24,9 @@ export const SubmissionReviewModal: React.FC<SubmissionReviewModalProps> = ({
   onSuccess
 }) => {
   const [reviewAction, setReviewAction] = useState<'approve' | 'request_revision'>('approve');
+  const [rating, setRating] = useState<number>(5);
+  const [hoverRating, setHoverRating] = useState<number | null>(null);
+  const [reviewText, setReviewText] = useState('');
   const [feedback, setFeedback] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -42,7 +45,9 @@ export const SubmissionReviewModal: React.FC<SubmissionReviewModalProps> = ({
 
       const res = await reviewSubmission(projectId, submission.id, {
         action: reviewAction,
-        feedback: feedback.trim()
+        feedback: reviewAction === 'approve' ? (reviewText.trim() || feedback.trim() || 'Approved') : feedback.trim(),
+        rating: reviewAction === 'approve' ? rating : undefined,
+        review: reviewAction === 'approve' ? (reviewText.trim() || feedback.trim() || 'Work delivered as requested.') : undefined
       });
 
       onSuccess(res.submission, res.milestoneStatus);
@@ -181,29 +186,80 @@ export const SubmissionReviewModal: React.FC<SubmissionReviewModalProps> = ({
             </div>
           </div>
 
-          {/* Feedback Textarea */}
-          <div>
-            <label className="block text-xs font-semibold text-gray-300 uppercase tracking-wider mb-2">
-              {reviewAction === 'request_revision' ? (
-                <span>
-                  Revision Feedback & Action Items <span className="text-red-400">*</span>
-                </span>
-              ) : (
-                <span>Approval Message / Feedback (Optional)</span>
-              )}
-            </label>
-            <textarea
-              value={feedback}
-              onChange={(e) => setFeedback(e.target.value)}
-              placeholder={
-                reviewAction === 'request_revision'
-                  ? 'Specify exactly what needs adjustment, timestamp references for video, or styling edits...'
-                  : 'Looks amazing! Great work on this milestone deliverable.'
-              }
-              rows={3}
-              className="w-full bg-[#161B26] border border-[#2B3545] rounded-xl px-4 py-3 text-sm text-white placeholder-gray-500 focus:outline-none focus:border-emerald-500 transition-colors resize-none"
-            />
-          </div>
+          {/* Rating and Review for Approval */}
+          {reviewAction === 'approve' ? (
+            <div className="space-y-4 p-4 rounded-xl bg-[#161B26]/80 border border-emerald-500/20">
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <label className="block text-xs font-semibold text-emerald-400 uppercase tracking-wider">
+                    Rate Deliverable & Creator Experience (Out of 5)
+                  </label>
+                  <span className="text-xs font-bold text-amber-400 bg-amber-500/10 border border-amber-500/20 px-2 py-0.5 rounded-full">
+                    {rating}.0 / 5.0 Stars
+                  </span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-1.5 p-2 bg-[#0B0F17] rounded-xl border border-[#2B3545]">
+                    {[1, 2, 3, 4, 5].map((starVal) => {
+                      const isFilled = (hoverRating !== null ? hoverRating : rating) >= starVal;
+                      return (
+                        <button
+                          key={starVal}
+                          type="button"
+                          onClick={() => setRating(starVal)}
+                          onMouseEnter={() => setHoverRating(starVal)}
+                          onMouseLeave={() => setHoverRating(null)}
+                          className="p-1.5 rounded-lg hover:scale-110 transition-transform focus:outline-none"
+                          title={`${starVal} Star${starVal > 1 ? 's' : ''}`}
+                        >
+                          <Star
+                            className={`w-6 h-6 transition-colors ${
+                              isFilled
+                                ? 'text-amber-400 fill-amber-400 drop-shadow-[0_0_8px_rgba(251,191,36,0.5)]'
+                                : 'text-gray-600 hover:text-gray-400'
+                            }`}
+                          />
+                        </button>
+                      );
+                    })}
+                  </div>
+                  <span className="text-xs text-gray-400 pl-2">
+                    {rating === 5 && '🌟 Exceptional — Exceeded expectations'}
+                    {rating === 4 && '✨ Great — High quality deliverable'}
+                    {rating === 3 && '👍 Good — Met project requirements'}
+                    {rating === 2 && '⚠️ Fair — Needed substantial revisions'}
+                    {rating === 1 && '❌ Poor — Did not meet expectations'}
+                  </span>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-gray-300 uppercase tracking-wider mb-2">
+                  Written Review & Feedback
+                </label>
+                <textarea
+                  value={reviewText}
+                  onChange={(e) => setReviewText(e.target.value)}
+                  placeholder="Share a short review on the creative quality, communication, and turnaround speed..."
+                  rows={3}
+                  className="w-full bg-[#0B0F17] border border-[#2B3545] rounded-xl px-4 py-3 text-sm text-white placeholder-gray-500 focus:outline-none focus:border-emerald-500 transition-colors resize-none"
+                />
+              </div>
+            </div>
+          ) : (
+            <div>
+              <label className="block text-xs font-semibold text-gray-300 uppercase tracking-wider mb-2">
+                Revision Feedback & Action Items <span className="text-red-400">*</span>
+              </label>
+              <textarea
+                value={feedback}
+                onChange={(e) => setFeedback(e.target.value)}
+                placeholder="Specify exactly what needs adjustment, timestamp references for video, or styling edits..."
+                rows={3}
+                className="w-full bg-[#161B26] border border-[#2B3545] rounded-xl px-4 py-3 text-sm text-white placeholder-gray-500 focus:outline-none focus:border-amber-500 transition-colors resize-none"
+              />
+            </div>
+          )}
 
           {/* Action Buttons */}
           <div className="pt-4 border-t border-[#1F2937] flex items-center justify-end gap-3">

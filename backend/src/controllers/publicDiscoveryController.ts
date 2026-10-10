@@ -3,6 +3,7 @@ import mongoose from 'mongoose';
 import { CampaignBrief } from '../models/CampaignBrief.js';
 import { CreatorProfile } from '../models/CreatorProfile.js';
 import { BrandProfile } from '../models/BrandProfile.js';
+import { Review } from '../models/Review.js';
 
 // GET /api/briefs
 export async function getPublicBriefs(req: Request, res: Response, next: NextFunction): Promise<void> {
@@ -275,12 +276,37 @@ export async function getPublicCreatorByUsernameOrId(req: Request, res: Response
     // Filter only active services
     const activeServices = (profile.services || []).filter((s) => s.status === 'active');
 
+    // Fetch top 5 recent reviews & average rating
+    const targetUserId = profile.userId;
+    const recentReviews = await Review.find({ creatorId: targetUserId })
+      .sort({ createdAt: -1 })
+      .limit(5)
+      .lean();
+
+    const allReviews = await Review.find({ creatorId: targetUserId }).select('rating').lean();
+    const count = allReviews.length;
+    const avg = count > 0
+      ? Number((allReviews.reduce((sum, r) => sum + r.rating, 0) / count).toFixed(1))
+      : (profile.averageRating || 5.0);
+
     const sanitized = {
       ...profile,
       id: profile._id.toString(),
       userId: undefined, // Never expose raw user ID in public response
       portfolioItems: publicPortfolio,
-      services: activeServices
+      services: activeServices,
+      averageRating: avg,
+      reviewCount: count,
+      reviews: recentReviews.map((r: any) => ({
+        id: r._id.toString(),
+        projectId: r.projectId?.toString(),
+        rating: r.rating,
+        review: r.review,
+        projectTitle: r.projectTitle,
+        brandName: r.brandName,
+        brandAvatar: r.brandAvatar,
+        createdAt: r.createdAt
+      }))
     };
 
     res.status(200).json({

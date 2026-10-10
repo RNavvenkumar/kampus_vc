@@ -69,6 +69,8 @@ export interface ICreatorProfile extends Document {
   services: IServiceItem[];
   profileVisibility: 'public' | 'unlisted' | 'private';
   profileCompletion: number;
+  averageRating?: number;
+  reviewCount?: number;
   calculateCompletion(): number;
   createdAt: Date;
   updatedAt: Date;
@@ -344,6 +346,17 @@ const creatorProfileSchema = new Schema<ICreatorProfile>(
       default: 20,
       min: 0,
       max: 100
+    },
+    averageRating: {
+      type: Number,
+      default: 5.0,
+      min: 1,
+      max: 5
+    },
+    reviewCount: {
+      type: Number,
+      default: 0,
+      min: 0
     }
   },
   {

@@ -38,7 +38,9 @@ import {
   ProjectFinancialsResponse,
   CreateOrderResponse,
   Conversation,
-  DirectMessage
+  DirectMessage,
+  ReviewItem,
+  ProjectHistoryItem
 } from '../types';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api';
@@ -878,7 +880,7 @@ export async function getMilestoneSubmissions(projectId: string, milestoneId?: s
 export async function reviewSubmission(
   projectId: string,
   submissionId: string,
-  data: { action: 'approve' | 'request_revision'; feedback?: string }
+  data: { action: 'approve' | 'request_revision'; feedback?: string; rating?: number; review?: string }
 ): Promise<{ submission: DeliverableSubmission; milestoneStatus: string }> {
   const response = await apiClient.post<{ success: boolean; data: { submission: DeliverableSubmission; milestoneStatus: string } }>(
     `/projects/${projectId}/submissions/${submissionId}/review`,
@@ -1366,6 +1368,34 @@ export async function sendDirectMessage(
     data: { message: DirectMessage };
   }>(`/conversations/${conversationId}/messages`, { content });
   return response.data.data.message;
+}
+
+export async function getProjectHistory(): Promise<ProjectHistoryItem[]> {
+  const response = await apiClient.get<{ success: boolean; data: ProjectHistoryItem[] }>('/projects/history');
+  return response.data.data;
+}
+
+export async function submitProjectReview(
+  projectId: string,
+  data: { rating: number; review?: string }
+): Promise<ReviewItem> {
+  const response = await apiClient.post<{ success: boolean; data: ReviewItem }>(`/projects/${projectId}/review`, data);
+  return response.data.data;
+}
+
+export async function getCreatorReviews(
+  creatorId: string
+): Promise<{ averageRating: number; reviewCount: number; reviews: ReviewItem[] }> {
+  const response = await apiClient.get<{
+    success: boolean;
+    data: { averageRating: number; reviewCount: number; reviews: ReviewItem[] };
+  }>(`/projects/creators/${creatorId}/reviews`);
+  return response.data.data;
+}
+
+export async function getBrandReviews(): Promise<ReviewItem[]> {
+  const response = await apiClient.get<{ success: boolean; data: ReviewItem[] }>('/projects/brand/reviews');
+  return response.data.data;
 }
 
 

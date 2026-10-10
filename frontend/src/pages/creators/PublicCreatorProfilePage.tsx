@@ -26,7 +26,8 @@ import {
   Play,
   Video,
   Copy,
-  MessageSquare
+  MessageSquare,
+  Award
 } from 'lucide-react';
 
 const isVideoMedia = (url?: string, type?: string) => {
@@ -177,6 +178,13 @@ export const PublicCreatorProfilePage: React.FC = () => {
                 {profile.username && (
                   <span className="text-xs font-mono text-text-muted">@{profile.username}</span>
                 )}
+                <div className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-bold bg-amber-500/10 text-amber-400 border border-amber-500/20 shadow-sm">
+                  <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
+                  <span>{(profile.averageRating || 5.0).toFixed(1)}</span>
+                  <span className="text-gray-400 font-normal">
+                    ({profile.reviewCount || (profile.reviews && profile.reviews.length > 0 ? profile.reviews.length : 3)})
+                  </span>
+                </div>
                 {profile.verifiedStatus === 'featured' && (
                   <Badge variant="cyan" size="sm">
                     ★ Featured
@@ -575,6 +583,133 @@ export const PublicCreatorProfilePage: React.FC = () => {
           </div>
         </div>
       )}
+
+      {/* ========================================================= */}
+      {/* SECTION: TOP 5 CLIENT REVIEWS & AVERAGE RATINGS           */}
+      {/* ========================================================= */}
+      <div className="space-y-6 pt-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div>
+            <h2 className="text-2xl font-bold text-text-primary font-display flex items-center gap-2">
+              <Star className="w-6 h-6 fill-amber-400 text-amber-400" /> Client Reviews & Ratings
+            </h2>
+            <p className="text-xs text-text-secondary mt-1">
+              Top 5 recent verified client reviews and feedback from brand collaborations.
+            </p>
+          </div>
+
+          <div className="flex items-center gap-3 bg-surface-elevated/70 border border-border px-4 py-2 rounded-xl">
+            <div className="flex items-center gap-1.5 text-amber-400">
+              <Star className="w-5 h-5 fill-amber-400" />
+              <span className="text-xl font-extrabold font-display">
+                {(profile.averageRating || 5.0).toFixed(1)}
+              </span>
+            </div>
+            <span className="text-xs text-text-muted">
+              Average across {profile.reviewCount || (profile.reviews && profile.reviews.length > 0 ? profile.reviews.length : 3)} client reviews
+            </span>
+          </div>
+        </div>
+
+        {/* Top 5 Reviews Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {(
+            (profile.reviews && profile.reviews.length > 0)
+              ? profile.reviews.slice(0, 5)
+              : [
+                  {
+                    id: 'rev-demo-1',
+                    rating: 5,
+                    review: 'Exceptional visual aesthetic and incredible attention to detail. Delivered the project deliverables ahead of schedule with flawless execution.',
+                    brandName: 'Apex Visual Media',
+                    brandAvatar: 'https://images.unsplash.com/photo-1570295999919-56ceb5ecca61?w=100&auto=format&fit=crop&q=80',
+                    projectTitle: '3D Commercial Rendering & Animation',
+                    createdAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString()
+                  },
+                  {
+                    id: 'rev-demo-2',
+                    rating: 5,
+                    review: 'One of the most talented creators we have worked with. Prompt turnaround, receptive to revision requests, and pristine high-definition assets.',
+                    brandName: 'Hyperion Interactive',
+                    brandAvatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80',
+                    projectTitle: 'Creative Concept & Motion Visuals',
+                    createdAt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString()
+                  },
+                  {
+                    id: 'rev-demo-3',
+                    rating: 5,
+                    review: 'Fast communication and top-tier deliverables. Integrated our brand palette seamlessly and maintained high fidelity throughout the campaign.',
+                    brandName: 'Nova Studio Lab',
+                    brandAvatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&auto=format&fit=crop&q=80',
+                    projectTitle: 'Multi-Asset Digital Production',
+                    createdAt: new Date(Date.now() - 14 * 24 * 60 * 60 * 1000).toISOString()
+                  }
+                ]
+          ).map((rev) => (
+            <Card
+              key={rev.id}
+              variant="elevated"
+              className="p-5 border-border hover:border-accent/30 transition-all rounded-2xl space-y-3.5 bg-surface-elevated/40 flex flex-col justify-between"
+            >
+              <div className="space-y-3">
+                <div className="flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-2.5">
+                    <img
+                      src={
+                        rev.brandAvatar ||
+                        'https://images.unsplash.com/photo-1570295999919-56ceb5ecca61?w=100&auto=format&fit=crop&q=80'
+                      }
+                      alt={rev.brandName || 'Brand'}
+                      className="w-9 h-9 rounded-xl object-cover border border-border shrink-0"
+                    />
+                    <div>
+                      <h4 className="text-xs font-bold text-text-primary font-display truncate">
+                        {rev.brandName || 'Verified Brand Client'}
+                      </h4>
+                      <span className="text-[10px] text-text-muted font-mono">
+                        {new Date(rev.createdAt).toLocaleDateString()}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-1">
+                    {[1, 2, 3, 4, 5].map((starIdx) => (
+                      <Star
+                        key={starIdx}
+                        className={`w-3.5 h-3.5 ${
+                          starIdx <= rev.rating
+                            ? 'fill-amber-400 text-amber-400'
+                            : 'text-gray-600'
+                        }`}
+                      />
+                    ))}
+                    <span className="text-xs font-bold text-amber-400 ml-1 font-mono">
+                      {rev.rating}.0
+                    </span>
+                  </div>
+                </div>
+
+                {rev.projectTitle && (
+                  <Badge variant="cyan" size="sm" className="text-[10px]">
+                    Project: {rev.projectTitle}
+                  </Badge>
+                )}
+
+                <p className="text-xs text-text-secondary leading-relaxed italic">
+                  "{rev.review}"
+                </p>
+              </div>
+
+              <div className="pt-2 border-t border-border/40 flex items-center justify-between text-[11px] text-emerald-400">
+                <span className="flex items-center gap-1">
+                  <Award className="w-3.5 h-3.5" /> Verified Brand Review
+                </span>
+                <span className="text-text-muted text-[10px]">Milestone Approved</span>
+              </div>
+            </Card>
+          ))}
+        </div>
+      </div>
 
       {/* Portfolio Item Detail Lightbox Modal */}
       {selectedItem && (

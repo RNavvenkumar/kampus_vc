@@ -22,8 +22,15 @@ import {
   MessageSquare,
   XCircle,
   Award,
-  ShieldCheck
+  ShieldCheck,
+  Play
 } from 'lucide-react';
+
+const isVideoMedia = (url?: string, type?: string) => {
+  if (type === 'video') return true;
+  if (!url) return false;
+  return /\.(mp4|webm|mov|ogg|m4v)(\?.*)?$/i.test(url) || url.includes('/video/upload/');
+};
 
 export const BrandProposalReviewDetailPage: React.FC = () => {
   const { proposalId } = useParams<{ proposalId: string }>();
@@ -428,12 +435,42 @@ export const BrandProposalReviewDetailPage: React.FC = () => {
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               {proposal.referencedPortfolio.map((item) => (
                 <div key={item.id} className="p-3 rounded-lg bg-[#090B10] border border-[#1F2937] space-y-2">
-                  {item.mediaUrl && (
-                    <img
-                      src={item.mediaUrl}
-                      alt={item.title}
-                      className="w-full h-32 object-cover rounded border border-[#1F2937]"
-                    />
+                  {(item.thumbnailUrl || item.mediaUrl) && (
+                    <div className="relative w-full h-32 rounded border border-[#1F2937] overflow-hidden bg-black/40">
+                      {isVideoMedia(item.mediaUrl, item.mediaType) ? (
+                        item.thumbnailUrl ? (
+                          <div className="relative w-full h-full">
+                            <img
+                              src={item.thumbnailUrl}
+                              alt={item.title}
+                              className="w-full h-full object-cover"
+                            />
+                            <div className="absolute inset-0 flex items-center justify-center bg-black/30">
+                              <div className="w-8 h-8 rounded-full bg-[#58D5FF] text-black flex items-center justify-center shadow">
+                                <Play className="w-4 h-4 fill-black ml-0.5" />
+                              </div>
+                            </div>
+                          </div>
+                        ) : (
+                          <video
+                            src={item.mediaUrl}
+                            className="w-full h-full object-cover"
+                            muted
+                            preload="metadata"
+                          />
+                        )
+                      ) : (
+                        <img
+                          src={item.thumbnailUrl || item.mediaUrl}
+                          alt={item.title}
+                          className="w-full h-full object-cover"
+                          onError={(e) => {
+                            (e.target as HTMLImageElement).src =
+                              'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=600&auto=format&fit=crop&q=80';
+                          }}
+                        />
+                      )}
+                    </div>
                   )}
                   <h4 className="text-sm font-bold text-white truncate">{item.title}</h4>
                   <p className="text-xs text-gray-400">{item.category}</p>
