@@ -16,6 +16,7 @@ export type LedgerAccount =
 
 export interface IFinancialLedgerEntry extends Document {
   entryReference: string;
+  idempotencyKey?: string;
   projectId: Types.ObjectId;
   paymentId?: Types.ObjectId;
   refundId?: Types.ObjectId;
@@ -38,6 +39,13 @@ const financialLedgerEntrySchema = new Schema<IFinancialLedgerEntry>(
       unique: true,
       trim: true,
       index: true
+    },
+    idempotencyKey: {
+      type: String,
+      trim: true,
+      default: function(this: any) {
+        return this.entryReference || new mongoose.Types.ObjectId().toString();
+      }
     },
     projectId: {
       type: Schema.Types.ObjectId,

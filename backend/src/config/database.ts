@@ -17,7 +17,7 @@ export async function connectDatabase(): Promise<boolean> {
     lastConnectionError = null;
     console.log('✅ MongoDB connected successfully to:', mongoose.connection.name);
 
-    // Auto-clean obsolete indexes that cause E11000 crashes (e.g. legacy internalPaymentId_1)
+    // Auto-clean obsolete indexes that cause E11000 crashes (e.g. legacy internalPaymentId_1, idempotencyKey_1)
     try {
       const collections = await mongoose.connection.db?.listCollections().toArray();
       const paymentsCollectionExists = collections?.some((c) => c.name === 'payments');
@@ -29,6 +29,18 @@ export async function connectDatabase(): Promise<boolean> {
           console.log('🧹 Dropping stale legacy index internalPaymentId_1 from payments collection...');
           await paymentsCollection?.dropIndex('internalPaymentId_1');
           console.log('✅ Legacy index internalPaymentId_1 dropped successfully.');
+        }
+      }
+
+      const ledgerCollectionExists = collections?.some((c) => c.name === 'financialledgerentries');
+      if (ledgerCollectionExists) {
+        const ledgerCollection = mongoose.connection.db?.collection('financialledgerentries');
+        const indexes = await ledgerCollection?.indexes();
+        const hasIdempotencyIndex = indexes?.some((idx) => idx.name === 'idempotencyKey_1');
+        if (hasIdempotencyIndex) {
+          console.log('🧹 Dropping stale legacy index idempotencyKey_1 from financialledgerentries collection...');
+          await ledgerCollection?.dropIndex('idempotencyKey_1');
+          console.log('✅ Legacy index idempotencyKey_1 dropped successfully.');
         }
       }
     } catch (cleanupErr) {
