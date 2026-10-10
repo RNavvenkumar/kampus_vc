@@ -11,7 +11,7 @@ export interface ILinkedEntity {
 
 export interface IMediaAsset extends Document {
   userId: Types.ObjectId;
-  storageProvider: 'local' | 's3';
+  storageProvider: 'local' | 's3' | 'cloudinary';
   objectKey: string;
   originalFilename: string;
   sanitizedFilename: string;
@@ -58,7 +58,7 @@ const mediaAssetSchema = new Schema<IMediaAsset>(
     },
     storageProvider: {
       type: String,
-      enum: ['local', 's3'],
+      enum: ['local', 's3', 'cloudinary'],
       required: true
     },
     objectKey: {

@@ -27,6 +27,7 @@ interface MediaUploadDropzoneProps {
   currentAssetId?: string;
   className?: string;
   label?: string;
+  intendedUse?: string;
 }
 
 const ALLOWED_MIME_TYPES: Record<string, string[]> = {
@@ -41,7 +42,8 @@ export const MediaUploadDropzone: React.FC<MediaUploadDropzoneProps> = ({
   category = 'all',
   currentUrl,
   className = '',
-  label = 'Upload Artwork or Video Reel'
+  label = 'Upload Artwork or Video Reel',
+  intendedUse = 'portfolio'
 }) => {
   const [isDragOver, setIsDragOver] = useState(false);
   const [uploadStatus, setUploadStatus] = useState<'idle' | 'uploading' | 'verifying' | 'ready' | 'error'>('idle');
@@ -81,7 +83,7 @@ export const MediaUploadDropzone: React.FC<MediaUploadDropzoneProps> = ({
         mimeType: file.type,
         fileSizeBytes: file.size,
         category: isImage ? 'image' : 'video',
-        intendedUse: 'portfolio'
+        intendedUse
       });
 
       // Step B: Direct upload to storage with live progress

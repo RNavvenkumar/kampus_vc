@@ -25,7 +25,8 @@ import {
   AlertCircle,
   Play,
   Video,
-  Copy
+  Copy,
+  MessageSquare
 } from 'lucide-react';
 
 const isVideoMedia = (url?: string, type?: string) => {
@@ -181,6 +182,18 @@ export const PublicCreatorProfilePage: React.FC = () => {
                     ★ Featured
                   </Badge>
                 )}
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSelectedInquiry(undefined);
+                    setIsChatOpen(true);
+                  }}
+                  className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-semibold bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 hover:bg-emerald-500/25 transition-all shadow-sm"
+                  title="Message Creator"
+                >
+                  <MessageSquare className="w-3.5 h-3.5" />
+                  <span>Message</span>
+                </button>
               </div>
 
               <p className="text-sm sm:text-base text-text-secondary max-w-2xl leading-relaxed">
@@ -238,16 +251,31 @@ export const PublicCreatorProfilePage: React.FC = () => {
               </p>
             )}
 
-            <Button
-              variant="primary"
-              size="sm"
-              onClick={() => {
-                setSelectedInquiry(undefined);
-                setIsChatOpen(true);
-              }}
-            >
-              Inquire for Project
-            </Button>
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 w-full">
+              <Button
+                variant="primary"
+                size="sm"
+                leftIcon={<MessageSquare className="w-4 h-4 text-emerald-300" />}
+                onClick={() => {
+                  setSelectedInquiry(undefined);
+                  setIsChatOpen(true);
+                }}
+                className="flex-1 sm:flex-initial shadow-lg shadow-emerald-500/15 bg-emerald-600 hover:bg-emerald-500 text-white border-0"
+              >
+                Message Creator
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  setSelectedInquiry(undefined);
+                  setIsChatOpen(true);
+                }}
+                className="flex-1 sm:flex-initial"
+              >
+                Inquire Project
+              </Button>
+            </div>
           </div>
         </div>
 

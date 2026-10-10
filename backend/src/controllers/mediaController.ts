@@ -20,7 +20,7 @@ const initiateUploadSchema = z.object({
   }),
   fileSizeBytes: z.number().int().positive('File size must be positive'),
   category: z.enum(['image', 'video']).optional(),
-  intendedUse: z.enum(['portfolio', 'avatar', 'cover', 'project_deliverable', 'general']).default('portfolio')
+  intendedUse: z.enum(['portfolio', 'avatar', 'cover', 'thumbnail', 'project_deliverable', 'general']).default('portfolio')
 });
 
 export const initiateMediaUpload = async (req: Request, res: Response): Promise<void> => {
@@ -108,12 +108,26 @@ export const initiateMediaUpload = async (req: Request, res: Response): Promise<
     await asset.save();
 
     // 5. Generate upload authorization via StorageProvider
-    const uploadAuth = await provider.initiateUpload({
-      objectKey,
-      mimeType,
-      fileSizeBytes,
-      expiresInSeconds: env.MEDIA_UPLOAD_URL_TTL_SECONDS
-    });
+    let uploadAuth;
+    try {
+      uploadAuth = await provider.initiateUpload({
+        objectKey,
+        mimeType,
+        fileSizeBytes,
+        expiresInSeconds: env.MEDIA_UPLOAD_URL_TTL_SECONDS
+      });
+    } catch (providerErr: any) {
+      console.warn('Storage provider failed to initiate upload, falling back to LocalStorageProvider:', providerErr?.message || providerErr);
+      const fallbackProvider = new LocalStorageProvider();
+      uploadAuth = await fallbackProvider.initiateUpload({
+        objectKey,
+        mimeType,
+        fileSizeBytes,
+        expiresInSeconds: env.MEDIA_UPLOAD_URL_TTL_SECONDS
+      });
+      asset.storageProvider = fallbackProvider.name;
+      await asset.save();
+    }
 
     res.status(201).json({
       message: 'Upload initiated successfully',
@@ -135,7 +149,7 @@ export const initiateMediaUpload = async (req: Request, res: Response): Promise<
     res.status(500).json({
       error: {
         code: 'INTERNAL_SERVER_ERROR',
-        message: 'An error occurred while initiating media upload.'
+        message: err?.message || 'An error occurred while initiating media upload.'
       }
     });
   }

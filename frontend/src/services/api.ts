@@ -1170,12 +1170,15 @@ export async function uploadFileToStorage(
   method: 'PUT' | 'POST' = 'PUT',
   fields?: Record<string, string>
 ): Promise<void> {
-  // If uploadUrl is relative, prepend API_BASE_URL (for local development storage)
+  // If uploadUrl is relative, prepend API host if API_BASE_URL is absolute
   let resolvedUrl = uploadUrl;
-  if (uploadUrl.startsWith('/api')) {
-    resolvedUrl = uploadUrl;
-  } else if (!uploadUrl.startsWith('http')) {
-    resolvedUrl = `${API_BASE_URL}${uploadUrl.startsWith('/') ? '' : '/'}${uploadUrl}`;
+  if (!uploadUrl.startsWith('http://') && !uploadUrl.startsWith('https://')) {
+    if (API_BASE_URL.startsWith('http://') || API_BASE_URL.startsWith('https://')) {
+      const baseOrigin = API_BASE_URL.replace(/\/api\/?$/, '');
+      resolvedUrl = `${baseOrigin}${uploadUrl.startsWith('/') ? '' : '/'}${uploadUrl}`;
+    } else {
+      resolvedUrl = uploadUrl;
+    }
   }
 
   if (method === 'POST' && fields) {

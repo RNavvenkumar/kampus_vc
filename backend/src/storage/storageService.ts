@@ -12,11 +12,19 @@ class StorageService {
   }
 
   private createDefaultProvider(): IStorageProvider {
-    if (env.MEDIA_STORAGE_PROVIDER === 's3') {
-      return new S3StorageProvider();
-    }
     if (env.MEDIA_STORAGE_PROVIDER === 'cloudinary') {
-      return new CloudinaryStorageProvider();
+      if (env.CLOUDINARY_CLOUD_NAME && env.CLOUDINARY_API_KEY && env.CLOUDINARY_API_SECRET) {
+        return new CloudinaryStorageProvider();
+      }
+      console.warn('⚠️ Cloudinary credentials missing or incomplete, falling back to LocalStorageProvider');
+      return new LocalStorageProvider();
+    }
+    if (env.MEDIA_STORAGE_PROVIDER === 's3') {
+      if (env.MEDIA_BUCKET && env.MEDIA_ACCESS_KEY_ID && env.MEDIA_SECRET_ACCESS_KEY) {
+        return new S3StorageProvider();
+      }
+      console.warn('⚠️ S3 credentials missing or incomplete, falling back to LocalStorageProvider');
+      return new LocalStorageProvider();
     }
     return new LocalStorageProvider();
   }
