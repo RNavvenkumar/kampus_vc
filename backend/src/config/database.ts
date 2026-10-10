@@ -25,7 +25,8 @@ export async function connectDatabase(): Promise<boolean> {
     if (env.NODE_ENV !== 'production') {
       try {
         console.log('🔄 Spinning up in-memory MongoDB development server...');
-        const { MongoMemoryServer } = await import('mongodb-memory-server');
+        const memModule = 'mongodb-memory-server';
+        const { MongoMemoryServer } = (await import(/* @vite-ignore */ memModule)) as any;
         const memServer = await MongoMemoryServer.create();
         const uri = memServer.getUri();
         await mongoose.connect(uri);

@@ -42,7 +42,7 @@ export function createApp() {
   );
 
   // Cookie parser
-  app.use(cookieParser());
+  app.use(cookieParser() as any);
 
   // Request body parsing with sensible limits and rawBody retention for webhook verification
   app.use(
