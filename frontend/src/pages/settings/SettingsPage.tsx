@@ -20,6 +20,7 @@ export const SettingsPage: React.FC = () => {
   const [isPasswordLoading, setIsPasswordLoading] = useState(false);
 
   // Profile edit state
+  const [creatorAvatar, setCreatorAvatar] = useState(creatorProfile?.avatarUrl || user?.avatar || '');
   const [creatorHeadline, setCreatorHeadline] = useState(creatorProfile?.headline || '');
   const [creatorBio, setCreatorBio] = useState(creatorProfile?.biography || '');
   const [creatorRate, setCreatorRate] = useState<number | undefined>(creatorProfile?.hourlyRate);
@@ -63,6 +64,7 @@ export const SettingsPage: React.FC = () => {
     try {
       if (user?.role === 'creator') {
         await updateCreatorProfile({
+          avatarUrl: creatorAvatar || undefined,
           headline: creatorHeadline,
           biography: creatorBio,
           hourlyRate: creatorRate ? Number(creatorRate) : undefined,
@@ -141,6 +143,33 @@ export const SettingsPage: React.FC = () => {
             {user?.role === 'creator' ? (
               <>
                 <div>
+                  <label className="block text-xs font-semibold text-text-muted mb-1.5 uppercase font-mono">
+                    Profile Picture / Avatar URL
+                  </label>
+                  <div className="flex items-center gap-4">
+                    <div className="relative w-14 h-14 rounded-full overflow-hidden bg-surface-elevated border-2 border-accent/40 flex-shrink-0">
+                      <img
+                        src={creatorAvatar || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400&auto=format&fit=crop&q=80'}
+                        alt="Profile avatar"
+                        className="w-full h-full object-cover"
+                        onError={(e) => {
+                          (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400&auto=format&fit=crop&q=80';
+                        }}
+                      />
+                    </div>
+                    <div className="flex-1">
+                      <input
+                        type="url"
+                        value={creatorAvatar}
+                        onChange={(e) => setCreatorAvatar(e.target.value)}
+                        placeholder="https://images.unsplash.com/... or image link"
+                        className="w-full px-4 py-2.5 rounded-lg bg-surface-elevated border border-border text-sm text-text-primary focus:outline-none focus:border-accent"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <div>
                   <label className="block text-xs font-semibold text-text-muted mb-1 uppercase font-mono">
                     Professional Headline
                   </label>
@@ -155,7 +184,7 @@ export const SettingsPage: React.FC = () => {
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-xs font-semibold text-text-muted mb-1 uppercase font-mono">
-                      Hourly Rate (USD)
+                      Hourly Rate (₹ INR)
                     </label>
                     <input
                       type="number"

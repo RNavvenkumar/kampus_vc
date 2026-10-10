@@ -337,9 +337,9 @@ export const ServiceCatalogPage: React.FC = () => {
                   <span className="text-xs text-text-muted">{service.category}</span>
                   <div className="mt-3 flex items-baseline gap-1">
                     <span className="text-3xl font-black text-text-primary font-display">
-                      ${service.price.toLocaleString()}
+                      ₹{service.price.toLocaleString()}
                     </span>
-                    <span className="text-xs font-mono text-text-muted">{service.currency}</span>
+                    <span className="text-xs font-mono text-text-muted">{service.currency === 'USD' ? 'INR' : service.currency}</span>
                   </div>
                 </div>
 

@@ -41,7 +41,7 @@ const POPULAR_TOOLS = [
   'ComfyUI'
 ];
 
-const CURRENCIES = ['USD', 'EUR', 'GBP', 'CAD', 'AUD', 'INR'];
+const CURRENCIES = ['INR', 'USD', 'EUR', 'GBP', 'CAD', 'AUD'];
 
 export const CreatorDiscoveryPage: React.FC = () => {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -54,7 +54,7 @@ export const CreatorDiscoveryPage: React.FC = () => {
   );
   const [minPrice, setMinPrice] = useState<string>(searchParams.get('minPrice') || '');
   const [maxPrice, setMaxPrice] = useState<string>(searchParams.get('maxPrice') || '');
-  const [currency, setCurrency] = useState<string>(searchParams.get('currency') || 'USD');
+  const [currency, setCurrency] = useState<string>(searchParams.get('currency') || 'INR');
   const [availability, setAvailability] = useState<string>(searchParams.get('availability') || 'All');
   const [experienceLevel, setExperienceLevel] = useState<string>(searchParams.get('experienceLevel') || 'All');
   const [sortBy, setSortBy] = useState<string>(searchParams.get('sortBy') || 'relevance');
@@ -84,7 +84,7 @@ export const CreatorDiscoveryPage: React.FC = () => {
     if (selectedTools.length > 0) params.set('creativeTools', selectedTools.join(','));
     if (minPrice) params.set('minPrice', minPrice);
     if (maxPrice) params.set('maxPrice', maxPrice);
-    if (currency !== 'USD') params.set('currency', currency);
+    if (currency !== 'INR') params.set('currency', currency);
     if (availability !== 'All') params.set('availability', availability);
     if (experienceLevel !== 'All') params.set('experienceLevel', experienceLevel);
     if (sortBy !== 'relevance') params.set('sortBy', sortBy);
@@ -104,7 +104,7 @@ export const CreatorDiscoveryPage: React.FC = () => {
         creativeTools: selectedTools.length > 0 ? selectedTools : undefined,
         minPrice: minPrice ? Number(minPrice) : undefined,
         maxPrice: maxPrice ? Number(maxPrice) : undefined,
-        currency: currency || 'USD',
+        currency: currency || 'INR',
         availability: availability !== 'All' ? (availability as any) : undefined,
         experienceLevel: experienceLevel !== 'All' ? (experienceLevel as any) : undefined,
         sortBy: sortBy as any,
@@ -176,7 +176,7 @@ export const CreatorDiscoveryPage: React.FC = () => {
     setSelectedTools([]);
     setMinPrice('');
     setMaxPrice('');
-    setCurrency('USD');
+    setCurrency('INR');
     setAvailability('All');
     setExperienceLevel('All');
     setSortBy('relevance');
@@ -242,7 +242,7 @@ export const CreatorDiscoveryPage: React.FC = () => {
                 type="text"
                 value={aiSearchInput}
                 onChange={(e) => setAiSearchInput(e.target.value)}
-                placeholder="Ask with Natural Language e.g. 'Senior 3D Unreal Engine animator with automotive commercial portfolio under $5000'"
+                placeholder="Ask with Natural Language e.g. 'Senior 3D Unreal Engine animator with automotive commercial portfolio under ₹50,000'"
                 className="w-full pl-10 pr-32 py-2.5 bg-surface-card border border-border-default/80 rounded-xl text-sm text-white placeholder-text-muted focus:outline-none focus:border-accent-cyan/60 focus:ring-1 focus:ring-accent-cyan/30 transition-all shadow-inner"
               />
               <div className="absolute right-2 flex items-center space-x-2">
@@ -702,7 +702,7 @@ export const CreatorDiscoveryPage: React.FC = () => {
                             <div>
                               <span className="text-[10px] text-text-muted uppercase tracking-wider block">Hourly Rate</span>
                               <span className="text-sm font-bold text-white font-mono">
-                                {creator.currency || 'USD'} {creator.hourlyRate}/hr
+                                ₹{creator.hourlyRate?.toLocaleString()}/hr
                               </span>
                             </div>
                           ) : (

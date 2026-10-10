@@ -227,7 +227,7 @@ export const PitchStudioPage: React.FC = () => {
         referencedPortfolioItemIds: selectedPortfolioIds,
         referencedServiceId: selectedServiceId || undefined,
         proposedPrice: Number(proposedPrice),
-        currency: brief?.currency || 'USD',
+        currency: brief?.currency || 'INR',
         deliveryDurationWeeks: Number(deliveryDurationWeeks),
         targetStartDate: targetStartDate || undefined,
         deliverables: cleanedDeliverables,
@@ -287,7 +287,7 @@ export const PitchStudioPage: React.FC = () => {
             </Link>
             <h1 className="text-3xl font-extrabold tracking-tight flex items-center gap-3">
               <span>{isEditingExisting ? 'Edit Proposal & Revisions' : 'Creator Pitch Studio'}</span>
-              <Badge variant="cyan" size="sm">Phase 4 Active</Badge>
+              <Badge variant="cyan" size="sm">Proposal Studio</Badge>
             </h1>
             <p className="text-gray-400 text-sm mt-1">
               Submit structured commercial offers, custom pitches, milestone schedules, and portfolio evidence.
@@ -365,7 +365,7 @@ export const PitchStudioPage: React.FC = () => {
               <div className="flex items-center gap-2">
                 <Badge variant="outline" size="sm">{brief.category}</Badge>
                 <Badge variant="cyan" size="sm">
-                  Budget: ${brief.budgetMin?.toLocaleString()} - ${brief.budgetMax?.toLocaleString()} {brief.currency}
+                  Budget: ₹{brief.budgetMin?.toLocaleString()} - ₹{brief.budgetMax?.toLocaleString()} {brief.currency === 'USD' ? 'INR' : brief.currency}
                 </Badge>
               </div>
             </div>
@@ -515,7 +515,7 @@ export const PitchStudioPage: React.FC = () => {
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-300 mb-1">
-                Total Proposed Price ({brief?.currency || 'USD'}) <span className="text-rose-400">*</span>
+                Total Proposed Price ({brief?.currency || 'INR'}) <span className="text-rose-400">*</span>
               </label>
               <Input
                 type="number"

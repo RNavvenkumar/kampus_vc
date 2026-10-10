@@ -200,11 +200,11 @@ const serviceItemSchema = new Schema<IServiceItem>(
     price: {
       type: Number,
       required: [true, 'Price is required'],
-      min: [5, 'Minimum service price is $5']
+      min: [5, 'Minimum service price is ₹5']
     },
     currency: {
       type: String,
-      default: 'USD',
+      default: 'INR',
       uppercase: true,
       maxlength: 3
     },

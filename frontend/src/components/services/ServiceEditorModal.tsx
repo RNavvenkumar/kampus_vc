@@ -33,8 +33,8 @@ export const ServiceEditorModal: React.FC<ServiceEditorModalProps> = ({
   const [description, setDescription] = useState('');
   const [deliverables, setDeliverables] = useState<string[]>(['']);
   const [revisions, setRevisions] = useState<number>(2);
-  const [price, setPrice] = useState<number>(500);
-  const [currency, setCurrency] = useState('USD');
+  const [price, setPrice] = useState<number>(5000);
+  const [currency, setCurrency] = useState('INR');
   const [turnaroundDays, setTurnaroundDays] = useState<number>(5);
   const [packageTier, setPackageTier] = useState<'starter' | 'standard' | 'premium'>('standard');
   const [status, setStatus] = useState<'active' | 'inactive'>('active');
@@ -49,8 +49,8 @@ export const ServiceEditorModal: React.FC<ServiceEditorModalProps> = ({
       setDescription(initialData.description || '');
       setDeliverables(initialData.deliverables?.length ? initialData.deliverables : ['']);
       setRevisions(initialData.revisions ?? 2);
-      setPrice(initialData.price ?? 500);
-      setCurrency(initialData.currency || 'USD');
+      setPrice(initialData.price ?? 5000);
+      setCurrency(initialData.currency || 'INR');
       setTurnaroundDays(initialData.turnaroundDays ?? 5);
       setPackageTier(initialData.packageTier || 'standard');
       setStatus(initialData.status || 'active');
@@ -60,8 +60,8 @@ export const ServiceEditorModal: React.FC<ServiceEditorModalProps> = ({
       setDescription('');
       setDeliverables(['']);
       setRevisions(2);
-      setPrice(500);
-      setCurrency('USD');
+      setPrice(5000);
+      setCurrency('INR');
       setTurnaroundDays(5);
       setPackageTier('standard');
       setStatus('active');
@@ -102,7 +102,7 @@ export const ServiceEditorModal: React.FC<ServiceEditorModalProps> = ({
     }
 
     if (price < 5) {
-      setError('Service price must be at least $5.');
+      setError('Service price must be at least ₹5.');
       return;
     }
 
@@ -210,7 +210,7 @@ export const ServiceEditorModal: React.FC<ServiceEditorModalProps> = ({
             </div>
 
             <Input
-              label="Price (USD) *"
+              label="Price (₹ INR) *"
               type="number"
               min={5}
               value={price}

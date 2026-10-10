@@ -17,6 +17,8 @@ const portfolioItemInputSchema = z.object({
 export const updateCreatorProfileSchema = z.object({
   displayName: z.string().min(1).max(100).optional(),
   username: z.string().regex(/^[a-z0-9_.-]{3,30}$/, 'Username must be 3-30 characters alphanumeric').optional(),
+  avatarUrl: z.string().url('Avatar must be a valid URL').optional().or(z.literal('')),
+  coverUrl: z.string().url().optional().or(z.literal('')),
   headline: z.string().max(180).optional(),
   biography: z.string().max(2500).optional(),
   specialties: z.array(z.string()).optional(),
@@ -74,6 +76,12 @@ export async function updateMyCreatorProfile(req: Request, res: Response, next: 
     // Whitelist assignment (explicitly prevent modifying userId or internal security fields)
     if (validatedData.displayName !== undefined) profile.displayName = validatedData.displayName;
     if (validatedData.username !== undefined) profile.username = validatedData.username;
+    if (validatedData.avatarUrl !== undefined) {
+      profile.avatarUrl = validatedData.avatarUrl;
+      user.avatarUrl = validatedData.avatarUrl;
+      await user.save();
+    }
+    if (validatedData.coverUrl !== undefined) profile.coverUrl = validatedData.coverUrl;
     if (validatedData.headline !== undefined) profile.headline = validatedData.headline;
     if (validatedData.biography !== undefined) profile.biography = validatedData.biography;
     if (validatedData.specialties !== undefined) profile.specialties = validatedData.specialties;
@@ -139,6 +147,9 @@ export async function saveCreatorOnboardingStep(req: Request, res: Response, nex
     // Update user onboarding step
     user.onboardingStep = Math.max(user.onboardingStep, validatedStep + 1);
     user.onboardingStatus = 'in_progress';
+    if (validatedData.avatarUrl !== undefined) {
+      user.avatarUrl = validatedData.avatarUrl;
+    }
     await user.save();
 
     res.status(200).json({

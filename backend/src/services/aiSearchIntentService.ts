@@ -8,7 +8,7 @@ export const parsedSearchIntentSchema = z.object({
   creativeTools: z.array(z.string()).default([]),
   minPrice: z.number().optional(),
   maxPrice: z.number().optional(),
-  currency: z.string().default('USD'),
+  currency: z.string().default('INR'),
   experienceLevel: z.enum(['beginner', 'intermediate', 'advanced', 'expert']).optional(),
   availability: z.enum(['available', 'limited', 'busy']).optional(),
   extractedKeywords: z.array(z.string()).default([])
@@ -54,7 +54,7 @@ export class AISearchIntentService {
         interpretedQuery: '',
         specialties: [],
         creativeTools: [],
-        currency: 'USD',
+        currency: 'INR',
         extractedKeywords: []
       };
     }
@@ -115,13 +115,15 @@ Extract:
       }
     }
 
-    // Extract Max Price (e.g. "under $5000", "< 3000", "budget 2500")
+    // Extract Max Price (e.g. "under ₹50000", "under $5000", "< 3000", "budget 2500")
     let maxPrice: number | undefined;
-    const priceMatch = query.match(/(?:under|below|max|budget|up to|<|\$)\s*\$?\s*([0-9]+(?:,[0-9]{3})*|\d+)(k)?/i);
+    const priceMatch = query.match(/(?:under|below|max|budget|up to|<|\$|₹|rs\.?|inr)\s*(?:\$|₹|rs\.?)?\s*([0-9]+(?:,[0-9]{3})*|\d+)(k|lakh|lac)?/i);
     if (priceMatch && priceMatch[1]) {
       let num = parseFloat(priceMatch[1].replace(/,/g, ''));
-      if (priceMatch[2] && priceMatch[2].toLowerCase() === 'k') {
-        num *= 1000;
+      if (priceMatch[2]) {
+        const unit = priceMatch[2].toLowerCase();
+        if (unit === 'k') num *= 1000;
+        if (unit === 'lakh' || unit === 'lac') num *= 100000;
       }
       if (!isNaN(num) && num > 0) {
         maxPrice = num;
@@ -129,10 +131,10 @@ Extract:
     }
 
     // Extract Currency
-    let currency = 'USD';
+    let currency = 'INR';
+    if (qLower.includes('usd') || query.includes('$')) currency = 'USD';
     if (qLower.includes('eur') || query.includes('€')) currency = 'EUR';
     if (qLower.includes('gbp') || query.includes('£')) currency = 'GBP';
-    if (qLower.includes('inr') || query.includes('₹')) currency = 'INR';
 
     // Extract Experience Level
     let experienceLevel: 'beginner' | 'intermediate' | 'advanced' | 'expert' | undefined;

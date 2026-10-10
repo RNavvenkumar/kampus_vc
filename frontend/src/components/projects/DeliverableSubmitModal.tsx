@@ -144,7 +144,7 @@ export const DeliverableSubmitModal: React.FC<DeliverableSubmitModalProps> = ({
           {/* Media File Upload (Dropzone) */}
           <div>
             <label className="block text-xs font-semibold text-gray-300 uppercase tracking-wider mb-2">
-              Upload Files or Video Render (Phase 7 Storage)
+              Upload Files or Video Render (Cloud Storage)
             </label>
             <MediaUploadDropzone
               onUploadComplete={handleAssetUploaded}

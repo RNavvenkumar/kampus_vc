@@ -218,9 +218,9 @@ export class MockAIProvider implements IAIProvider {
         ],
         exclusions: ['No stock template footage or uncurated artifact-heavy generations'],
         budgetSuggestion: {
-          minBudget: 2500,
-          maxBudget: 6000,
-          currency: 'USD',
+          minBudget: 25000,
+          maxBudget: 60000,
+          currency: 'INR',
           reasoning: 'Reflects professional 3D motion design, bespoke audio mixing, and multi-format delivery over 3–4 weeks.'
         },
         timelineSuggestion: {

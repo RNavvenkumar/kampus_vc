@@ -8,7 +8,6 @@ import { Badge } from '../../components/ui/Badge';
 import {
   FileText,
   Clock,
-  DollarSign,
   AlertCircle,
   Eye,
   Edit,
@@ -93,7 +92,7 @@ export const CreatorProposalsListPage: React.FC = () => {
           <div>
             <h1 className="text-3xl font-extrabold tracking-tight flex items-center gap-3">
               <span>My Creator Proposals</span>
-              <Badge variant="cyan" size="sm">Phase 4</Badge>
+              <Badge variant="cyan" size="sm">Pitch Hub</Badge>
             </h1>
             <p className="text-gray-400 text-sm mt-1">
               Track your submitted pitches, negotiate revisions, and monitor project award decisions.
@@ -242,8 +241,7 @@ export const CreatorProposalsListPage: React.FC = () => {
                       {/* Metadata */}
                       <div className="flex flex-wrap items-center gap-4 text-xs text-gray-400 pt-2">
                         <span className="flex items-center gap-1 font-semibold text-white">
-                          <DollarSign className="w-3.5 h-3.5 text-emerald-400" />
-                          ${prop.proposedPrice?.toLocaleString()} {prop.currency}
+                          ₹{prop.proposedPrice?.toLocaleString()} {prop.currency === 'USD' ? 'INR' : prop.currency}
                         </span>
                         <span className="flex items-center gap-1">
                           <Clock className="w-3.5 h-3.5 text-gray-500" />

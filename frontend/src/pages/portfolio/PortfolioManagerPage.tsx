@@ -27,8 +27,16 @@ import {
   Sparkles,
   AlertCircle,
   CheckCircle2,
-  ArrowLeft
+  ArrowLeft,
+  Play,
+  Copy
 } from 'lucide-react';
+
+const isVideoMedia = (url?: string, type?: string) => {
+  if (type === 'video') return true;
+  if (!url) return false;
+  return /\.(mp4|webm|mov|ogg|m4v)(\?.*)?$/i.test(url) || url.includes('/video/upload/');
+};
 
 export const PortfolioManagerPage: React.FC = () => {
   const [items, setItems] = useState<PortfolioItem[]>([]);
@@ -283,15 +291,47 @@ export const PortfolioManagerPage: React.FC = () => {
               <div>
                 {/* Media Preview Container */}
                 <div className="relative w-full h-52 bg-surface-muted overflow-hidden">
-                  <img
-                    src={item.thumbnailUrl || item.mediaUrl}
-                    alt={item.title}
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                    onError={(e) => {
-                      (e.target as HTMLImageElement).src =
-                        'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=600&auto=format&fit=crop&q=80';
-                    }}
-                  />
+                  {isVideoMedia(item.mediaUrl, item.mediaType) ? (
+                    item.thumbnailUrl ? (
+                      <div className="relative w-full h-full">
+                        <img
+                          src={item.thumbnailUrl}
+                          alt={item.title}
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                        />
+                        <div className="absolute inset-0 flex items-center justify-center bg-black/30 group-hover:bg-black/10 transition-colors">
+                          <div className="w-9 h-9 rounded-full bg-accent/90 text-black flex items-center justify-center shadow-lg">
+                            <Play className="w-4 h-4 fill-black ml-0.5" />
+                          </div>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="relative w-full h-full">
+                        <video
+                          src={item.mediaUrl}
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                          muted
+                          preload="metadata"
+                          playsInline
+                        />
+                        <div className="absolute inset-0 flex items-center justify-center bg-black/25 group-hover:bg-black/10 transition-colors">
+                          <div className="w-9 h-9 rounded-full bg-accent/90 text-black flex items-center justify-center shadow-lg">
+                            <Play className="w-4 h-4 fill-black ml-0.5" />
+                          </div>
+                        </div>
+                      </div>
+                    )
+                  ) : (
+                    <img
+                      src={item.thumbnailUrl || item.mediaUrl}
+                      alt={item.title}
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                      onError={(e) => {
+                        (e.target as HTMLImageElement).src =
+                          'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=600&auto=format&fit=crop&q=80';
+                      }}
+                    />
+                  )}
 
                   {/* Overlay Badges */}
                   <div className="absolute top-3 left-3 flex flex-wrap gap-1.5">
@@ -308,6 +348,26 @@ export const PortfolioManagerPage: React.FC = () => {
                   <div className="absolute top-3 right-3 flex items-center gap-1 bg-black/60 backdrop-blur-md rounded-lg p-1 border border-white/10">
                     <button
                       type="button"
+                      onClick={() => {
+                        navigator.clipboard.writeText(item.mediaUrl);
+                        alert('Media link copied to clipboard!');
+                      }}
+                      title="Copy Media URL"
+                      className="p-1.5 text-text-muted hover:text-white rounded hover:bg-white/20 transition-colors"
+                    >
+                      <Copy className="w-4 h-4" />
+                    </button>
+                    <a
+                      href={item.mediaUrl}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="p-1.5 text-text-muted hover:text-white rounded hover:bg-white/20 transition-colors"
+                      title="Open Raw Media in New Tab"
+                    >
+                      <ExternalLink className="w-4 h-4" />
+                    </a>
+                    <button
+                      type="button"
                       onClick={() => handleToggleFeature(item.id)}
                       title={item.isFeatured ? 'Unfeature' : 'Feature on profile'}
                       className={`p-1.5 rounded hover:bg-white/20 transition-colors ${
@@ -316,17 +376,6 @@ export const PortfolioManagerPage: React.FC = () => {
                     >
                       <Star className={`w-4 h-4 ${item.isFeatured ? 'fill-current' : ''}`} />
                     </button>
-                    {item.projectUrl && (
-                      <a
-                        href={item.projectUrl}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="p-1.5 text-text-muted hover:text-white rounded hover:bg-white/20 transition-colors"
-                        title="External Case Study"
-                      >
-                        <ExternalLink className="w-4 h-4" />
-                      </a>
-                    )}
                   </div>
 
                   {/* Visibility Tag */}

@@ -21,6 +21,22 @@
   h1, h2, h3, h4, h5, h6 {
     font-family: 'Outfit', 'Inter', system-ui, sans-serif;
   }
+
+  input, textarea, select {
+    color: #F8FAFC !important;
+    background-color: #11151D;
+    border-color: #293140;
+  }
+
+  input::placeholder, textarea::placeholder {
+    color: #94A3B8 !important;
+    opacity: 1;
+  }
+
+  input:focus, textarea:focus, select:focus {
+    color: #FFFFFF !important;
+    border-color: #58D5FF !important;
+  }
 }
 
 /* Custom modern scrollbar */

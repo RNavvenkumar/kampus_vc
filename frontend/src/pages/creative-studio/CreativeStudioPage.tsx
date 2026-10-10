@@ -62,9 +62,9 @@ export const CreativeStudioPage: React.FC = () => {
   // Input State for Brief Generation
   const [prompt, setPrompt] = useState('');
   const [category, setCategory] = useState('3D Animation & Motion');
-  const [knownBudgetMin, setKnownBudgetMin] = useState<number | undefined>(3000);
-  const [knownBudgetMax, setKnownBudgetMax] = useState<number | undefined>(7500);
-  const [currency, setCurrency] = useState('USD');
+  const [knownBudgetMin, setKnownBudgetMin] = useState<number | undefined>(25000);
+  const [knownBudgetMax, setKnownBudgetMax] = useState<number | undefined>(75000);
+  const [currency, setCurrency] = useState('INR');
   const [timelineWeeks, setTimelineWeeks] = useState<number | undefined>(4);
   const [locationPreference] = useState<'remote' | 'hybrid' | 'onsite'>('remote');
 
@@ -502,7 +502,7 @@ export const CreativeStudioPage: React.FC = () => {
             <div>
               <div className="flex items-center space-x-2">
                 <h1 className="text-xl font-bold tracking-tight text-white">AI Creative Brief Studio</h1>
-                <Badge variant="cyan" size="sm">Phase 5</Badge>
+                <Badge variant="cyan" size="sm">AI Studio</Badge>
                 {currentDraftId && <Badge variant="neutral" size="sm">Draft ID: {currentDraftId.slice(-6)}</Badge>}
               </div>
               <p className="text-xs text-text-muted">
@@ -709,7 +709,7 @@ export const CreativeStudioPage: React.FC = () => {
                       value={prompt}
                       onChange={(e) => setPrompt(e.target.value)}
                       placeholder="e.g. We are launching a premium sustainable skincare product. We need cinematic social videos and product visuals aimed at young urban customers..."
-                      className="w-full rounded-xl bg-surface-subtle border border-border-default px-3.5 py-2.5 text-sm text-white placeholder-text-muted focus:border-accent-cyan focus:ring-1 focus:ring-accent-cyan transition-all"
+                      className="w-full rounded-xl bg-[#11151D] border border-[#293140] px-3.5 py-2.5 text-sm text-[#F8FAFC] placeholder-[#94A3B8] focus:border-accent focus:ring-1 focus:ring-accent transition-all font-normal leading-relaxed"
                     />
                   </div>
 
@@ -719,7 +719,7 @@ export const CreativeStudioPage: React.FC = () => {
                       <select
                         value={category}
                         onChange={(e) => setCategory(e.target.value)}
-                        className="w-full rounded-xl bg-surface-subtle border border-border-default px-3 py-2 text-sm text-white focus:border-accent-cyan"
+                        className="w-full rounded-xl bg-[#11151D] border border-[#293140] px-3 py-2 text-sm text-[#F8FAFC] focus:border-accent"
                       >
                         <option value="3D Animation & Motion">3D Animation & Motion</option>
                         <option value="AI Art & Concept Direction">AI Art & Concept Direction</option>
@@ -739,7 +739,7 @@ export const CreativeStudioPage: React.FC = () => {
                           value={timelineWeeks || ''}
                           onChange={(e) => setTimelineWeeks(e.target.value ? parseInt(e.target.value, 10) : undefined)}
                           placeholder="4"
-                          className="w-full rounded-xl bg-surface-subtle border border-border-default px-3 py-2 text-sm text-white focus:border-accent-cyan"
+                          className="w-full rounded-xl bg-[#11151D] border border-[#293140] px-3 py-2 text-sm text-[#F8FAFC] focus:border-accent"
                         />
                         <span className="absolute right-3 top-2.5 text-xs text-text-muted">weeks</span>
                       </div>
@@ -753,8 +753,9 @@ export const CreativeStudioPage: React.FC = () => {
                       <select
                         value={currency}
                         onChange={(e) => setCurrency(e.target.value)}
-                        className="w-full rounded-xl bg-surface-subtle border border-border-default px-3 py-2 text-sm text-white focus:border-accent-cyan"
+                        className="w-full rounded-xl bg-[#11151D] border border-[#293140] px-3 py-2 text-sm text-[#F8FAFC] focus:border-accent"
                       >
+                        <option value="INR">INR (₹)</option>
                         <option value="USD">USD ($)</option>
                         <option value="EUR">EUR (€)</option>
                         <option value="GBP">GBP (£)</option>
@@ -766,8 +767,8 @@ export const CreativeStudioPage: React.FC = () => {
                         type="number"
                         value={knownBudgetMin || ''}
                         onChange={(e) => setKnownBudgetMin(e.target.value ? parseFloat(e.target.value) : undefined)}
-                        placeholder="2000"
-                        className="w-full rounded-xl bg-surface-subtle border border-border-default px-3 py-2 text-sm text-white focus:border-accent-cyan"
+                        placeholder="25000"
+                        className="w-full rounded-xl bg-[#11151D] border border-[#293140] px-3 py-2 text-sm text-[#F8FAFC] focus:border-accent"
                       />
                     </div>
                     <div>
@@ -776,8 +777,8 @@ export const CreativeStudioPage: React.FC = () => {
                         type="number"
                         value={knownBudgetMax || ''}
                         onChange={(e) => setKnownBudgetMax(e.target.value ? parseFloat(e.target.value) : undefined)}
-                        placeholder="5000"
-                        className="w-full rounded-xl bg-surface-subtle border border-border-default px-3 py-2 text-sm text-white focus:border-accent-cyan"
+                        placeholder="75000"
+                        className="w-full rounded-xl bg-[#11151D] border border-[#293140] px-3 py-2 text-sm text-[#F8FAFC] focus:border-accent"
                       />
                     </div>
                   </div>
@@ -1282,7 +1283,7 @@ export const CreativeStudioPage: React.FC = () => {
                         >
                           <div>
                             <div className="flex items-center space-x-2">
-                              <Badge variant="cyan" size="sm">Phase {idx + 1}</Badge>
+                              <Badge variant="cyan" size="sm">Milestone {idx + 1}</Badge>
                               <span className="font-semibold text-white text-sm">{phase.phaseName}</span>
                             </div>
                             <p className="text-xs text-text-muted mt-1">

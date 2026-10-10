@@ -94,7 +94,7 @@ export const BrandProposalsManagerPage: React.FC = () => {
           <div>
             <h1 className="text-3xl font-extrabold tracking-tight flex items-center gap-3">
               <span>Brand Proposal Review Center</span>
-              <Badge variant="cyan" size="sm">Phase 4 Active</Badge>
+              <Badge variant="cyan" size="sm">Review Center</Badge>
             </h1>
             <p className="text-gray-400 text-sm mt-1">
               Review submitted creator pitches, shortlist top contenders, request revisions, and award projects.

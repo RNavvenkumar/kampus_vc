@@ -3,8 +3,14 @@ import { CreatorProfile } from '../../types';
 import { Card } from '../ui/Card';
 import { Badge } from '../ui/Badge';
 import { Button } from '../ui/Button';
-import { CheckCircle2, Sparkles, ArrowRight, Layers, Tag } from 'lucide-react';
+import { CheckCircle2, Sparkles, ArrowRight, Layers, Tag, Play } from 'lucide-react';
 import { Link } from 'react-router-dom';
+
+const isVideoMedia = (url?: string, type?: string) => {
+  if (type === 'video') return true;
+  if (!url) return false;
+  return /\.(mp4|webm|mov|ogg|m4v)(\?.*)?$/i.test(url) || url.includes('/video/upload/');
+};
 
 export interface CreatorCardProps {
   creator: CreatorProfile;
@@ -30,12 +36,45 @@ export const CreatorCard: React.FC<CreatorCardProps> = ({ creator, featured = fa
       {/* Portfolio Thumbnail Preview */}
       <div className="relative h-48 w-full overflow-hidden bg-surface-elevated">
         {primaryPortfolio ? (
-          <img
-            src={primaryPortfolio.thumbnailUrl || primaryPortfolio.mediaUrl}
-            alt={primaryPortfolio.title}
-            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-            loading="lazy"
-          />
+          isVideoMedia(primaryPortfolio.mediaUrl, primaryPortfolio.mediaType) ? (
+            primaryPortfolio.thumbnailUrl ? (
+              <div className="relative w-full h-full">
+                <img
+                  src={primaryPortfolio.thumbnailUrl}
+                  alt={primaryPortfolio.title}
+                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                  loading="lazy"
+                />
+                <div className="absolute inset-0 flex items-center justify-center bg-black/25">
+                  <div className="w-8 h-8 rounded-full bg-accent/90 text-black flex items-center justify-center shadow-lg">
+                    <Play className="w-4 h-4 fill-black ml-0.5" />
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <div className="relative w-full h-full">
+                <video
+                  src={primaryPortfolio.mediaUrl}
+                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                  muted
+                  preload="metadata"
+                  playsInline
+                />
+                <div className="absolute inset-0 flex items-center justify-center bg-black/25">
+                  <div className="w-8 h-8 rounded-full bg-accent/90 text-black flex items-center justify-center shadow-lg">
+                    <Play className="w-4 h-4 fill-black ml-0.5" />
+                  </div>
+                </div>
+              </div>
+            )
+          ) : (
+            <img
+              src={primaryPortfolio.thumbnailUrl || primaryPortfolio.mediaUrl}
+              alt={primaryPortfolio.title}
+              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+              loading="lazy"
+            />
+          )
         ) : (
           <div className="w-full h-full flex items-center justify-center text-text-muted">
             <Layers className="w-8 h-8 opacity-40" />
@@ -64,7 +103,7 @@ export const CreatorCard: React.FC<CreatorCardProps> = ({ creator, featured = fa
         {/* Rate starting pill */}
         {(creator.rateStartingAt || creator.hourlyRate) && (
           <div className="absolute bottom-3 right-3 px-2.5 py-1 rounded-md bg-black/80 backdrop-blur-md border border-border text-xs font-semibold text-text-primary">
-            From ${creator.rateStartingAt || creator.hourlyRate}
+            From ₹{(creator.rateStartingAt || creator.hourlyRate)?.toLocaleString()}/hr
           </div>
         )}
       </div>

@@ -9,8 +9,8 @@ export const serviceItemSchema = z.object({
   category: z.string().min(1, 'Category is required').default('Creative Production'),
   deliverables: z.array(z.string()).min(1, 'At least one deliverable is required'),
   revisions: z.number().int().min(0).max(20).default(2),
-  price: z.number().min(5, 'Minimum service price is $5'),
-  currency: z.string().length(3, 'Currency must be a 3-letter ISO code').default('USD'),
+  price: z.number().min(5, 'Minimum service price is ₹5'),
+  currency: z.string().length(3, 'Currency must be a 3-letter ISO code').default('INR'),
   turnaroundDays: z.number().int().min(1, 'Turnaround must be at least 1 day').max(365, 'Turnaround cannot exceed 365 days'),
   packageTier: z.enum(['starter', 'standard', 'premium']).default('standard'),
   status: z.enum(['active', 'inactive']).default('active')

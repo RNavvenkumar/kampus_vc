@@ -2,7 +2,7 @@ import React from 'react';
 import { Card } from '../ui/Card';
 import { Badge } from '../ui/Badge';
 import { Button } from '../ui/Button';
-import { Calendar, DollarSign, Sparkles, ArrowRight } from 'lucide-react';
+import { Calendar, IndianRupee, Sparkles, ArrowRight } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 export const BriefPreviewCard: React.FC = () => {
@@ -45,7 +45,7 @@ export const BriefPreviewCard: React.FC = () => {
       <div className="pt-4 border-t border-border/60 flex flex-wrap items-center justify-between gap-4 text-xs">
         <div className="flex items-center gap-4 text-text-muted">
           <span className="flex items-center gap-1 font-semibold text-text-primary">
-            <DollarSign className="w-3.5 h-3.5 text-accent" /> $4,500 – $6,000
+            <IndianRupee className="w-3.5 h-3.5 text-accent" /> ₹45,000 – ₹60,000
           </span>
           <span className="flex items-center gap-1">
             <Calendar className="w-3.5 h-3.5" /> 3 Weeks Timeline

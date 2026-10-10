@@ -422,7 +422,7 @@ export const ProjectDetailPage: React.FC = () => {
                         <div className="text-right">
                           {m.amount !== undefined && (
                             <div className="text-lg font-extrabold text-emerald-400">
-                              ${m.amount.toLocaleString()} {project.currency}
+                              ₹{m.amount.toLocaleString()} {project.currency === 'USD' ? 'INR' : project.currency}
                             </div>
                           )}
                           {m.durationWeeks && (

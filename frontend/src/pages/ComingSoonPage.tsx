@@ -12,50 +12,50 @@ export const ComingSoonPage: React.FC = () => {
   const routeDetails: Record<string, { title: string; phase: string; description: string }> = {
     '/dashboard': {
       title: 'Workspace Dashboard',
-      phase: 'Phase 3 (Dashboards & Portfolio)',
+      phase: 'Workspace Center',
       description: 'Your central command center for active briefs, incoming proposals, and project milestones.'
     },
     '/creator/dashboard': {
       title: 'Creator Studio Dashboard',
-      phase: 'Phase 3 (Dashboards & Portfolio)',
+      phase: 'Creator Studio',
       description: 'Manage your portfolio items, rate settings, availability, and client inquiries.'
     },
     '/brand/dashboard': {
       title: 'Brand Campaign Manager',
-      phase: 'Phase 3 (Dashboards & Portfolio)',
+      phase: 'Brand Operations',
       description: 'Review AI brief drafts, track incoming creator proposals, and manage project deliverables.'
     },
     '/briefs': {
       title: 'Campaign Briefs Workspace',
-      phase: 'Phase 5 (Briefs & AI Drafting)',
+      phase: 'Campaign Studio',
       description: 'Full AI-assisted campaign brief generator, structured deliverable requirements, and revision settings.'
     },
     '/projects': {
       title: 'Active Projects & Milestones',
-      phase: 'Phase 7 (Proposals & Projects)',
+      phase: 'Project Operations',
       description: 'Structured stage-by-stage deliverable reviews, client approvals, and contract terms.'
     },
     '/messages': {
       title: 'Direct Creative Messaging',
-      phase: 'Phase 8 (Messaging & Notifications)',
+      phase: 'Direct Messaging',
       description: 'Real-time project chats, attachment sharing, and notification streams.'
     },
     '/calls': {
       title: 'Live Video Collaboration Room',
-      phase: 'Phase 9 (Calls & Media)',
+      phase: 'Video Suite',
       description: 'Real-time video/audio calling and screen sharing for creative direction review.'
     },
     '/settings': {
       title: 'Account & Security Settings',
-      phase: 'Phase 2 (Auth & Profiles)',
+      phase: 'Security & Profile',
       description: 'Security configurations, notification preferences, and billing profiles.'
     }
   };
 
   const details = routeDetails[path] || {
-    title: 'Feature In Development',
-    phase: 'Upcoming Phase',
-    description: 'This area of Kampus.VC is planned in our systematic roadmap.'
+    title: 'Feature Workspace',
+    phase: 'Creator Marketplace',
+    description: 'This area of Kampus.VC is optimized for verified creative collaboration.'
   };
 
   return (

@@ -15,7 +15,7 @@ export const createBriefSchema = z.object({
   budgetType: z.enum(['fixed', 'range']).default('range'),
   budgetMin: z.number().min(0, 'Minimum budget cannot be negative').default(1000),
   budgetMax: z.number().min(0, 'Maximum budget cannot be negative').default(3000),
-  currency: z.string().length(3, 'Currency must be a 3-letter code').default('USD'),
+  currency: z.string().length(3, 'Currency must be a 3-letter code').default('INR'),
   durationWeeks: z.number().int().min(1).max(52).default(4),
   targetStartDate: z.string().optional().or(z.literal('')),
   deadline: z.string().optional().or(z.literal('')),

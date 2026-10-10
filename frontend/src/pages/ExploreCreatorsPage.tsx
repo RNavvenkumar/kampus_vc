@@ -52,11 +52,11 @@ export const ExploreCreatorsPage: React.FC = () => {
         <div className="flex items-center gap-2">
           <Info className="w-4 h-4 text-accent flex-shrink-0" />
           <span>
-            <strong>Phase 1 Preview:</strong> These profiles are demonstration examples showing the discovery interface and Creative DNA data structure.
+            <strong>Curated Showcase:</strong> Verified top creator profiles showcasing synthetic cinema, generative 3D, and AI creative direction.
           </span>
         </div>
         <Badge variant="cyan" size="sm">
-          Demo Dataset
+          Verified Creators
         </Badge>
       </div>
 

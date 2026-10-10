@@ -45,7 +45,7 @@ export const FinancialSummaryTab: React.FC<FinancialSummaryTabProps> = ({
   const financials = financialData?.financials;
   const payments = financialData?.payments || [];
   const ledgerEntries = financialData?.ledgerSummary?.entries || [];
-  const currency = financials?.currency || project.currency || 'USD';
+  const currency = financials?.currency || project.currency || 'INR';
 
   const isBrand = currentUserRole === 'brand' || project.brandId === currentUserRole;
 

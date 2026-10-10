@@ -328,7 +328,7 @@ export const BrandBriefsManagerPage: React.FC = () => {
                 <div className="text-right flex-shrink-0">
                   <span className="text-xs font-mono text-text-muted uppercase block">Estimated Budget</span>
                   <div className="text-xl sm:text-2xl font-black text-text-primary font-display">
-                    ${brief.budgetMin.toLocaleString()} – ${brief.budgetMax.toLocaleString()}
+                    ₹{brief.budgetMin.toLocaleString()} – ₹{brief.budgetMax.toLocaleString()}
                   </div>
                   <span className="text-[11px] font-mono text-accent">{brief.currency}</span>
                 </div>

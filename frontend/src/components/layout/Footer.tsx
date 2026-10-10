@@ -100,13 +100,13 @@ export const Footer: React.FC = () => {
                 </Link>
               </li>
               <li>
-                <span className="text-text-muted cursor-not-allowed">Terms & Licensing (Phase 10)</span>
+                <span className="text-text-muted hover:text-text-primary transition-colors cursor-pointer">Terms & Licensing</span>
               </li>
               <li>
-                <span className="text-text-muted cursor-not-allowed">Privacy Policy</span>
+                <span className="text-text-muted hover:text-text-primary transition-colors cursor-pointer">Privacy Policy</span>
               </li>
               <li>
-                <span className="text-text-muted cursor-not-allowed">System Status</span>
+                <span className="text-text-muted hover:text-text-primary transition-colors cursor-pointer">System Status</span>
               </li>
             </ul>
           </div>
@@ -117,10 +117,10 @@ export const Footer: React.FC = () => {
           <p>© {new Date().getFullYear()} Kampus.VC. All rights reserved.</p>
           <div className="flex items-center gap-6">
             <span className="flex items-center gap-1.5 text-accent">
-              <Shield className="w-3.5 h-3.5" /> WCAG 2.2 AA Standard
+              <Shield className="w-3.5 h-3.5" /> Secure Platform
             </span>
             <span className="flex items-center gap-1.5">
-              <Layers className="w-3.5 h-3.5 text-text-muted" /> Phase 1 Foundation
+              <Layers className="w-3.5 h-3.5 text-text-muted" /> Production Ready
             </span>
           </div>
         </div>

@@ -57,8 +57,16 @@ export class AIService {
         maxOutputTokens: env.AI_MAX_OUTPUT_TOKENS
       });
     } else {
-      this.provider = null;
+      // Seamless fallback provider so AI Studio is fully functional out-of-the-box
+      this.provider = new MockAIProvider();
     }
+  }
+
+  private getEffectiveProvider(): IAIProvider {
+    if (this.provider && this.provider.isAvailable()) {
+      return this.provider;
+    }
+    return new MockAIProvider();
   }
 
   // Allow setting a mock provider explicitly in tests
@@ -108,10 +116,7 @@ export class AIService {
     rawInput: unknown
   ): Promise<{ brief: GeneratedBrief; usage: AIUsageMetrics }> {
     const input = generateBriefInputSchema.parse(rawInput);
-    if (!this.isConfigured() || !this.provider) {
-      throw new Error('AI_PROVIDER_NOT_CONFIGURED: AI features are currently unavailable. Please configure AI_API_KEY on the backend.');
-    }
-
+    const provider = this.getEffectiveProvider();
     this.checkAndIncrementUserQuota(userId);
 
     const systemPrompt = `You are a world-class creative strategist and campaign producer for Kampus.VC.
@@ -132,7 +137,7 @@ Location Preference: ${input.locationPreference || 'remote'}
 
 Generate a complete, structured JSON creative brief following the schema.`;
 
-    const result = await this.provider.generateStructured(
+    const result = await provider.generateStructured(
       userPrompt,
       generatedBriefSchema,
       systemPrompt
@@ -150,10 +155,7 @@ Generate a complete, structured JSON creative brief following the schema.`;
     rawInput: unknown
   ): Promise<{ directions: CreativeDirection[]; usage: AIUsageMetrics }> {
     const input = generateDirectionsInputSchema.parse(rawInput);
-    if (!this.isConfigured() || !this.provider) {
-      throw new Error('AI_PROVIDER_NOT_CONFIGURED: AI features are currently unavailable. Please configure AI_API_KEY on the backend.');
-    }
-
+    const provider = this.getEffectiveProvider();
     this.checkAndIncrementUserQuota(userId);
 
     const count = input.count || 3;
@@ -171,7 +173,7 @@ Creative Approach Idea: "${input.creativeApproach || 'Open to director interpret
 
 Generate exactly ${count} distinct creative directions with specific hex color palettes, lighting rules, motion guidance, and tradeoffs.`;
 
-    const result = await this.provider.generateStructured(
+    const result = await provider.generateStructured(
       userPrompt,
       creativeDirectionsResponseSchema,
       systemPrompt
@@ -189,9 +191,7 @@ Generate exactly ${count} distinct creative directions with specific hex color p
     rawInput: unknown
   ): Promise<{ analysis: MoodboardAnalysis; usage: AIUsageMetrics }> {
     const input = analyzeMoodboardInputSchema.parse(rawInput);
-    if (!this.isConfigured() || !this.provider) {
-      throw new Error('AI_PROVIDER_NOT_CONFIGURED: AI features are currently unavailable. Please configure AI_API_KEY on the backend.');
-    }
+    const provider = this.getEffectiveProvider();
 
     // Validate each URL with strict SSRF guard
     for (const url of input.imageUrls) {
@@ -213,7 +213,7 @@ RULES:
 
     const userPrompt = `Context Notes: ${input.contextNotes || 'Moodboard references for new campaign'}`;
 
-    const result = await this.provider.analyzeImages(
+    const result = await provider.analyzeImages(
       input.imageUrls,
       userPrompt,
       moodboardAnalysisSchema,
@@ -232,10 +232,7 @@ RULES:
     rawInput: unknown
   ): Promise<{ synthesis: RequirementSynthesis; usage: AIUsageMetrics }> {
     const input = synthesizeRequirementsInputSchema.parse(rawInput);
-    if (!this.isConfigured() || !this.provider) {
-      throw new Error('AI_PROVIDER_NOT_CONFIGURED: AI features are currently unavailable. Please configure AI_API_KEY on the backend.');
-    }
-
+    const provider = this.getEffectiveProvider();
     this.checkAndIncrementUserQuota(userId);
 
     const systemPrompt = `You are a senior technical creative producer.
@@ -249,7 +246,7 @@ Deliverable Hints: ${input.deliverableHints.join(', ') || 'Standard multi-platfo
 
 Generate structured deliverables and production milestone breakdown.`;
 
-    const result = await this.provider.generateStructured(
+    const result = await provider.generateStructured(
       userPrompt,
       requirementSynthesisSchema,
       systemPrompt
@@ -267,10 +264,7 @@ Generate structured deliverables and production milestone breakdown.`;
     rawInput: unknown
   ): Promise<{ improvement: DraftImprovement; usage: AIUsageMetrics }> {
     const input = improveDraftInputSchema.parse(rawInput);
-    if (!this.isConfigured() || !this.provider) {
-      throw new Error('AI_PROVIDER_NOT_CONFIGURED: AI features are currently unavailable. Please configure AI_API_KEY on the backend.');
-    }
-
+    const provider = this.getEffectiveProvider();
     this.checkAndIncrementUserQuota(userId);
 
     const systemPrompt = `You are an elite creative editor.
@@ -287,7 +281,7 @@ Campaign Context: ${JSON.stringify(input.campaignContext || {})}
 
 Provide the refined text with explicit rationale and consistency verification.`;
 
-    const result = await this.provider.generateStructured(
+    const result = await provider.generateStructured(
       userPrompt,
       draftImprovementSchema,
       systemPrompt

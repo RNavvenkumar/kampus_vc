@@ -212,7 +212,7 @@ export const BrandDashboardPage: React.FC = () => {
 
                   <div className="flex items-center gap-4 text-xs">
                     <span className="font-mono text-text-secondary">
-                      ${b.budgetMin.toLocaleString()} – ${b.budgetMax.toLocaleString()}
+                      ₹{b.budgetMin.toLocaleString()} – ₹{b.budgetMax.toLocaleString()}
                     </span>
                     <Link to={`/brand/briefs/${b.id}/edit`}>
                       <Button variant="outline" size="sm">

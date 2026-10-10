@@ -32,7 +32,7 @@ export const generatedBriefSchema = z.object({
     .object({
       minBudget: z.number().nonnegative().optional(),
       maxBudget: z.number().nonnegative().optional(),
-      currency: z.string().default('USD'),
+      currency: z.string().default('INR'),
       reasoning: z.string()
     })
     .nullable()

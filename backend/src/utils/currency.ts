@@ -74,12 +74,13 @@ export function toMajorUnits(minorAmount: number, currency: string): number {
 /**
  * Formats a minor unit amount for display with currency symbol and standard locale formatting.
  */
-export function formatMinorUnits(minorAmount: number, currency: string, locale = 'en-US'): string {
+export function formatMinorUnits(minorAmount: number, currency = 'INR', locale?: string): string {
   const major = toMajorUnits(minorAmount, currency);
-  const code = (currency || 'USD').toUpperCase().trim();
+  const code = (currency || 'INR').toUpperCase().trim();
+  const targetLocale = locale || (code === 'INR' ? 'en-IN' : 'en-US');
 
   try {
-    return new Intl.NumberFormat(locale, {
+    return new Intl.NumberFormat(targetLocale, {
       style: 'currency',
       currency: code,
       minimumFractionDigits: ZERO_DECIMAL_CURRENCIES.has(code) ? 0 : 2

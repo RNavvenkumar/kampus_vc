@@ -11,6 +11,8 @@ export interface User {
   onboardingStatus: OnboardingStatus;
   onboardingStep: number;
   lastLoginAt?: string;
+  avatar?: string;
+  avatarUrl?: string;
   createdAt: string;
   updatedAt: string;
 }

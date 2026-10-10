@@ -228,7 +228,7 @@ export const PublicBriefDetailPage: React.FC = () => {
                 Estimated Project Budget
               </span>
               <div className="text-3xl font-black text-text-primary font-display">
-                ${brief.budgetMin.toLocaleString()} – ${brief.budgetMax.toLocaleString()}
+                ₹{brief.budgetMin.toLocaleString()} – ₹{brief.budgetMax.toLocaleString()}
               </div>
               <span className="text-xs font-mono text-accent">{brief.currency} Total Compensation</span>
             </div>

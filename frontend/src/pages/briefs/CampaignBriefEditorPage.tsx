@@ -70,9 +70,9 @@ export const CampaignBriefEditorPage: React.FC = () => {
 
   const [deliverables, setDeliverables] = useState<string[]>(['']);
   const [budgetType, setBudgetType] = useState<BudgetType>('range');
-  const [budgetMin, setBudgetMin] = useState<number>(2000);
-  const [budgetMax, setBudgetMax] = useState<number>(5000);
-  const [currency, setCurrency] = useState('USD');
+  const [budgetMin, setBudgetMin] = useState<number>(25000);
+  const [budgetMax, setBudgetMax] = useState<number>(75000);
+  const [currency, setCurrency] = useState('INR');
   const [durationWeeks, setDurationWeeks] = useState<number>(4);
 
   const [targetStartDate, setTargetStartDate] = useState('');
@@ -105,9 +105,9 @@ export const CampaignBriefEditorPage: React.FC = () => {
           setExperienceLevel(brief.experienceLevel || 'any');
           setDeliverables(brief.deliverables?.length ? brief.deliverables : ['']);
           setBudgetType(brief.budgetType || 'range');
-          setBudgetMin(brief.budgetMin ?? 2000);
-          setBudgetMax(brief.budgetMax ?? 5000);
-          setCurrency(brief.currency || 'USD');
+          setBudgetMin(brief.budgetMin ?? 25000);
+          setBudgetMax(brief.budgetMax ?? 75000);
+          setCurrency(brief.currency || 'INR');
           setDurationWeeks(brief.durationWeeks ?? 4);
           setTargetStartDate(brief.targetStartDate ? brief.targetStartDate.substring(0, 10) : '');
           setDeadline(brief.deadline ? brief.deadline.substring(0, 10) : '');
@@ -420,7 +420,7 @@ export const CampaignBriefEditorPage: React.FC = () => {
                 value={description}
                 onChange={(e: ChangeEvent<HTMLTextAreaElement>) => setDescription(e.target.value)}
                 placeholder="Explain the background of your brand, target audience, aesthetic benchmarks, mood, lighting, storytelling arc, and brand constraints..."
-                className="w-full bg-surface-elevated border border-border rounded-lg p-3.5 text-sm text-text-primary focus:outline-none focus:border-accent resize-none leading-relaxed"
+                className="w-full bg-[#11151D] border border-[#293140] rounded-lg p-3.5 text-sm text-[#F8FAFC] placeholder-[#94A3B8] focus:outline-none focus:border-accent resize-none leading-relaxed"
               />
             </div>
           </div>
@@ -590,7 +590,7 @@ export const CampaignBriefEditorPage: React.FC = () => {
                 value={currency}
                 onChange={(e: ChangeEvent<HTMLInputElement>) => setCurrency(e.target.value)}
                 maxLength={3}
-                helperText="ISO-4217 Currency Code (e.g. USD, EUR, GBP)"
+                helperText="ISO-4217 Currency Code (e.g. INR, USD, EUR, GBP)"
               />
               <Input
                 label="Estimated Duration (Weeks)"

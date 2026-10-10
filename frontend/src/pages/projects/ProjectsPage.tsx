@@ -8,7 +8,6 @@ import { Badge } from '../../components/ui/Badge';
 import {
   FolderKanban,
   Clock,
-  DollarSign,
   AlertCircle,
   ArrowRight
 } from 'lucide-react';
@@ -42,7 +41,7 @@ export const ProjectsPage: React.FC = () => {
           <div>
             <h1 className="text-3xl font-extrabold tracking-tight flex items-center gap-3">
               <span>Awarded Project Workspaces</span>
-              <Badge variant="success" size="sm">Phase 4 Active</Badge>
+              <Badge variant="success" size="sm">Active Workspace</Badge>
             </h1>
             <p className="text-gray-400 text-sm mt-1">
               Active projects initialized from accepted creator proposals with immutable agreement snapshots.
@@ -104,8 +103,7 @@ export const ProjectsPage: React.FC = () => {
 
                       <div className="flex flex-wrap items-center gap-4 text-xs text-gray-400 pt-1">
                         <span className="flex items-center gap-1 font-bold text-emerald-400 text-sm">
-                          <DollarSign className="w-4 h-4 text-emerald-400" />
-                          ${proj.agreedPrice?.toLocaleString()} {proj.currency}
+                          ₹{proj.agreedPrice?.toLocaleString()} {proj.currency === 'USD' ? 'INR' : proj.currency}
                         </span>
                         <span className="flex items-center gap-1">
                           <Clock className="w-3.5 h-3.5 text-gray-500" />

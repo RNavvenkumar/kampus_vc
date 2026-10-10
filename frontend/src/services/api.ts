@@ -497,8 +497,8 @@ export const DEMO_CREATORS: CreatorProfile[] = [
       strengths: ['Lighting Composition', 'Prompt Engineering', 'Complex Texturing'],
       colorPalette: ['#0A1128', '#00E8C6', '#FF3366']
     },
-    rateStartingAt: 1200,
-    currency: 'USD',
+    rateStartingAt: 15000,
+    currency: 'INR',
     availability: 'available',
     portfolioItems: [
       {
@@ -538,8 +538,8 @@ export const DEMO_CREATORS: CreatorProfile[] = [
         category: 'Concept Art',
         deliverables: ['4x 4K Master Visuals', 'Lighting Breakdown Sheet', 'PSD Working Files'],
         revisions: 2,
-        price: 1200,
-        currency: 'USD',
+        price: 15000,
+        currency: 'INR',
         turnaroundDays: 5,
         packageTier: 'standard',
         status: 'active'
@@ -567,8 +567,8 @@ export const DEMO_CREATORS: CreatorProfile[] = [
       strengths: ['Physics Simulation', 'Lighting & Caustics', 'Pacing & Rhythm'],
       colorPalette: ['#121214', '#58D5FF', '#F3BD59']
     },
-    rateStartingAt: 1800,
-    currency: 'USD',
+    rateStartingAt: 25000,
+    currency: 'INR',
     availability: 'limited',
     portfolioItems: [
       {
@@ -594,8 +594,8 @@ export const DEMO_CREATORS: CreatorProfile[] = [
         category: '3D Motion',
         deliverables: ['15s 4K Video', 'ProRes 422 HQ Master', 'Social Aspect Cutdowns (9:16, 1:1)'],
         revisions: 3,
-        price: 2400,
-        currency: 'USD',
+        price: 35000,
+        currency: 'INR',
         turnaroundDays: 7,
         packageTier: 'premium',
         status: 'active'
@@ -623,8 +623,8 @@ export const DEMO_CREATORS: CreatorProfile[] = [
       strengths: ['Grid Architecture', 'Brand Consistency', 'Typographic Hierarchy'],
       colorPalette: ['#090B10', '#FFFFFF', '#FF4757']
     },
-    rateStartingAt: 2200,
-    currency: 'USD',
+    rateStartingAt: 30000,
+    currency: 'INR',
     availability: 'available',
     portfolioItems: [
       {
@@ -650,8 +650,8 @@ export const DEMO_CREATORS: CreatorProfile[] = [
         category: 'Branding',
         deliverables: ['Vector Logo Assets', 'Typography Guidelines', 'Figma Design Tokens Guide', 'Brand Book PDF'],
         revisions: 2,
-        price: 2200,
-        currency: 'USD',
+        price: 30000,
+        currency: 'INR',
         turnaroundDays: 10,
         packageTier: 'standard',
         status: 'active'
@@ -679,8 +679,8 @@ export const DEMO_CREATORS: CreatorProfile[] = [
       strengths: ['Story Pacing', 'Color Science', 'Audio-Visual Harmony'],
       colorPalette: ['#1C1917', '#E0A96D', '#28BDF0']
     },
-    rateStartingAt: 2500,
-    currency: 'USD',
+    rateStartingAt: 40000,
+    currency: 'INR',
     availability: 'busy',
     portfolioItems: [
       {
@@ -706,8 +706,8 @@ export const DEMO_CREATORS: CreatorProfile[] = [
         category: 'Video Production',
         deliverables: ['30s 4K Final Cut', 'Sound Design Mix', 'Clean Version without Text'],
         revisions: 2,
-        price: 3200,
-        currency: 'USD',
+        price: 45000,
+        currency: 'INR',
         turnaroundDays: 8,
         packageTier: 'premium',
         status: 'active'

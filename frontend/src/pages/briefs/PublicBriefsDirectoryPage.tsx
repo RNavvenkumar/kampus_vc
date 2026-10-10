@@ -277,7 +277,7 @@ export const PublicBriefsDirectoryPage: React.FC = () => {
                   <div>
                     <span className="text-[10px] font-mono text-text-muted uppercase block">Budget</span>
                     <span className="text-base font-bold text-text-primary font-display">
-                      ${brief.budgetMin.toLocaleString()} – ${brief.budgetMax.toLocaleString()}
+                      ₹{brief.budgetMin.toLocaleString()} – ₹{brief.budgetMax.toLocaleString()}
                     </span>
                   </div>
 

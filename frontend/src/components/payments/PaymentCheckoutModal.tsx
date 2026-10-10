@@ -40,7 +40,7 @@ export const PaymentCheckoutModal: React.FC<PaymentCheckoutModalProps> = ({
   if (!isOpen) return null;
 
   const payableAmountMajor = milestone?.amount || project.agreedPrice;
-  const currency = project.currency || 'USD';
+  const currency = project.currency || 'INR';
   const purposeTitle = milestone
     ? `Milestone ${milestone.order}: ${milestone.title}`
     : `Full Contract Escrow Deposit (${project.title})`;

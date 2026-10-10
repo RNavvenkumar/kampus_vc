@@ -29,6 +29,7 @@ export const CreatorOnboardingPage: React.FC = () => {
   // Form states
   const [displayName, setDisplayName] = useState(creatorProfile?.displayName || user?.name || '');
   const [username, setUsername] = useState(creatorProfile?.username || '');
+  const [avatarUrl, setAvatarUrl] = useState(creatorProfile?.avatarUrl || user?.avatar || '');
   const [headline, setHeadline] = useState(creatorProfile?.headline || '');
 
   const [biography, setBiography] = useState(creatorProfile?.biography || '');
@@ -47,7 +48,7 @@ export const CreatorOnboardingPage: React.FC = () => {
     creatorProfile?.portfolioItems?.[0]?.category || 'Generative AI'
   );
 
-  const [hourlyRate, setHourlyRate] = useState<number | undefined>(creatorProfile?.hourlyRate || 85);
+  const [hourlyRate, setHourlyRate] = useState<number | undefined>(creatorProfile?.hourlyRate || 1500);
   const [availability, setAvailability] = useState<'available' | 'limited' | 'busy'>(
     creatorProfile?.availability || 'available'
   );
@@ -100,7 +101,7 @@ export const CreatorOnboardingPage: React.FC = () => {
       let stepPayload: Record<string, unknown> = {};
 
       if (currentStep === 1) {
-        stepPayload = { displayName, username: username || undefined, headline };
+        stepPayload = { displayName, username: username || undefined, headline, avatarUrl: avatarUrl || undefined };
       } else if (currentStep === 2) {
         stepPayload = { biography, specialties, creativeTools, experienceLevel };
       } else if (currentStep === 3) {
@@ -120,6 +121,7 @@ export const CreatorOnboardingPage: React.FC = () => {
       } else if (currentStep === 4) {
         stepPayload = {
           hourlyRate: hourlyRate ? Number(hourlyRate) : undefined,
+          currency: 'INR',
           availability,
           location,
           website: website || undefined
@@ -219,6 +221,37 @@ export const CreatorOnboardingPage: React.FC = () => {
             </div>
 
             <div className="space-y-4">
+              {/* Profile Picture / Avatar */}
+              <div>
+                <label className="block text-xs font-semibold text-text-muted mb-1.5 uppercase font-mono">
+                  Profile Picture / Avatar URL
+                </label>
+                <div className="flex items-center gap-4">
+                  <div className="relative w-16 h-16 rounded-full overflow-hidden bg-surface-elevated border-2 border-accent/40 flex-shrink-0">
+                    <img
+                      src={avatarUrl || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400&auto=format&fit=crop&q=80'}
+                      alt="Profile preview"
+                      className="w-full h-full object-cover"
+                      onError={(e) => {
+                        (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400&auto=format&fit=crop&q=80';
+                      }}
+                    />
+                  </div>
+                  <div className="flex-1">
+                    <input
+                      type="url"
+                      value={avatarUrl}
+                      onChange={(e) => setAvatarUrl(e.target.value)}
+                      placeholder="https://images.unsplash.com/... or image URL"
+                      className="w-full px-4 py-2.5 rounded-lg bg-surface-elevated border border-border text-sm text-text-primary focus:outline-none focus:border-accent"
+                    />
+                    <p className="text-[11px] text-text-muted mt-1">
+                      Enter a direct image link or paste your avatar URL.
+                    </p>
+                  </div>
+                </div>
+              </div>
+
               <div>
                 <label className="block text-xs font-semibold text-text-muted mb-1 uppercase font-mono">
                   Display Name *
@@ -441,14 +474,14 @@ export const CreatorOnboardingPage: React.FC = () => {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-xs font-semibold text-text-muted mb-1 uppercase font-mono">
-                    Starting Hourly Rate (USD)
+                    Starting Hourly Rate (₹ INR)
                   </label>
                   <input
                     type="number"
                     min={0}
                     value={hourlyRate || ''}
                     onChange={(e) => setHourlyRate(e.target.value ? Number(e.target.value) : undefined)}
-                    placeholder="e.g. 100"
+                    placeholder="e.g. 1500"
                     className="w-full px-4 py-2.5 rounded-lg bg-surface-elevated border border-border text-sm text-text-primary focus:outline-none focus:border-accent"
                   />
                 </div>

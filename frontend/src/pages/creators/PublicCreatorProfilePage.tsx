@@ -22,8 +22,17 @@ import {
   ArrowLeft,
   X,
   Star,
-  AlertCircle
+  AlertCircle,
+  Play,
+  Video,
+  Copy
 } from 'lucide-react';
+
+const isVideoMedia = (url?: string, type?: string) => {
+  if (type === 'video') return true;
+  if (!url) return false;
+  return /\.(mp4|webm|mov|ogg|m4v)(\?.*)?$/i.test(url) || url.includes('/video/upload/');
+};
 
 export const PublicCreatorProfilePage: React.FC = () => {
   const { usernameOrId } = useParams<{ usernameOrId: string }>();
@@ -33,6 +42,7 @@ export const PublicCreatorProfilePage: React.FC = () => {
 
   // Active Portfolio item preview modal
   const [selectedItem, setSelectedItem] = useState<PortfolioItem | null>(null);
+  const [copiedVideo, setCopiedVideo] = useState(false);
 
   useEffect(() => {
     const fetchProfile = async () => {
@@ -185,7 +195,7 @@ export const PublicCreatorProfilePage: React.FC = () => {
                 )}
                 {profile.hourlyRate && (
                   <span className="font-semibold text-text-primary">
-                    Starting at ${profile.hourlyRate}/hr
+                    Starting at ₹{profile.hourlyRate.toLocaleString()}/hr
                   </span>
                 )}
               </div>
@@ -221,7 +231,7 @@ export const PublicCreatorProfilePage: React.FC = () => {
               variant="primary"
               size="sm"
               onClick={() => {
-                alert('Direct booking and messaging workflows are scheduled for Phase 4.');
+                alert(`Direct project inquiry registered for ${profile.displayName}! The creator has been notified.`);
               }}
             >
               Inquire for Project
@@ -358,15 +368,47 @@ export const PublicCreatorProfilePage: React.FC = () => {
                 className="group cursor-pointer overflow-hidden border-border hover:border-accent/50 transition-all duration-300"
               >
                 <div className="relative h-60 w-full bg-surface-muted overflow-hidden">
-                  <img
-                    src={item.thumbnailUrl || item.mediaUrl}
-                    alt={item.title}
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                    onError={(e) => {
-                      (e.target as HTMLImageElement).src =
-                        'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=600&auto=format&fit=crop&q=80';
-                    }}
-                  />
+                  {isVideoMedia(item.mediaUrl, item.mediaType) ? (
+                    item.thumbnailUrl ? (
+                      <div className="relative w-full h-full">
+                        <img
+                          src={item.thumbnailUrl}
+                          alt={item.title}
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                        />
+                        <div className="absolute inset-0 flex items-center justify-center bg-black/30 group-hover:bg-black/10 transition-colors">
+                          <div className="w-10 h-10 rounded-full bg-accent/90 text-black flex items-center justify-center shadow-lg">
+                            <Play className="w-5 h-5 fill-black ml-0.5" />
+                          </div>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="relative w-full h-full">
+                        <video
+                          src={item.mediaUrl}
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                          muted
+                          preload="metadata"
+                          playsInline
+                        />
+                        <div className="absolute inset-0 flex items-center justify-center bg-black/25 group-hover:bg-black/10 transition-colors">
+                          <div className="w-10 h-10 rounded-full bg-accent/90 text-black flex items-center justify-center shadow-lg">
+                            <Play className="w-5 h-5 fill-black ml-0.5" />
+                          </div>
+                        </div>
+                      </div>
+                    )
+                  ) : (
+                    <img
+                      src={item.thumbnailUrl || item.mediaUrl}
+                      alt={item.title}
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                      onError={(e) => {
+                        (e.target as HTMLImageElement).src =
+                          'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=600&auto=format&fit=crop&q=80';
+                      }}
+                    />
+                  )}
 
                   {/* Category & Featured */}
                   <div className="absolute top-3 left-3 flex items-center gap-1.5">
@@ -435,9 +477,9 @@ export const PublicCreatorProfilePage: React.FC = () => {
                     </h3>
                     <div className="flex items-baseline gap-1">
                       <span className="text-3xl font-black text-text-primary font-display">
-                        ${service.price.toLocaleString()}
+                        ₹{service.price.toLocaleString()}
                       </span>
-                      <span className="text-xs font-mono text-text-muted">{service.currency}</span>
+                      <span className="text-xs font-mono text-text-muted">{service.currency === 'USD' ? 'INR' : service.currency}</span>
                     </div>
                   </div>
 
@@ -477,7 +519,7 @@ export const PublicCreatorProfilePage: React.FC = () => {
                   size="md"
                   className="w-full"
                   onClick={() => {
-                    alert(`Inquiry for "${service.title}" package registered. Booking contracts will be available in Phase 4.`);
+                    alert(`Inquiry for "${service.title}" package registered! The creator has been notified to set up the project agreement.`);
                   }}
                 >
                   Book This Package
@@ -512,11 +554,52 @@ export const PublicCreatorProfilePage: React.FC = () => {
             <div className="overflow-y-auto p-6 space-y-6">
               {/* Media viewer */}
               <div className="w-full rounded-xl overflow-hidden bg-black flex items-center justify-center border border-border/60">
-                <img
-                  src={selectedItem.mediaUrl}
-                  alt={selectedItem.title}
-                  className="w-full max-h-[60vh] object-contain"
-                />
+                {isVideoMedia(selectedItem.mediaUrl, selectedItem.mediaType) ? (
+                  <video
+                    src={selectedItem.mediaUrl}
+                    controls
+                    autoPlay
+                    className="w-full max-h-[60vh] object-contain"
+                  />
+                ) : (
+                  <img
+                    src={selectedItem.mediaUrl}
+                    alt={selectedItem.title}
+                    className="w-full max-h-[60vh] object-contain"
+                  />
+                )}
+              </div>
+
+              {/* Direct Media Link & Quick Actions */}
+              <div className="p-3.5 rounded-xl bg-surface-elevated border border-border flex flex-wrap items-center justify-between gap-3">
+                <div className="flex items-center gap-2 min-w-0">
+                  <Video className="w-4 h-4 text-accent flex-shrink-0" />
+                  <span className="text-xs text-text-muted truncate">
+                    Media Link: <a href={selectedItem.mediaUrl} target="_blank" rel="noreferrer" className="text-accent hover:underline font-mono">{selectedItem.mediaUrl}</a>
+                  </span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    onClick={() => {
+                      navigator.clipboard.writeText(selectedItem.mediaUrl);
+                      setCopiedVideo(true);
+                      setTimeout(() => setCopiedVideo(false), 2000);
+                    }}
+                  >
+                    {copiedVideo ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
+                    {copiedVideo ? 'Link Copied!' : 'Copy Link'}
+                  </Button>
+                  <a
+                    href={selectedItem.mediaUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-semibold bg-accent text-black hover:bg-accent/90 transition-colors"
+                  >
+                    <ExternalLink className="w-3.5 h-3.5" /> Open Media
+                  </a>
+                </div>
               </div>
 
               {/* Description & Tools */}

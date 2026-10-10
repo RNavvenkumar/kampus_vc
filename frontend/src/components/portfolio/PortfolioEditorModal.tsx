@@ -301,6 +301,18 @@ export const PortfolioEditorModal: React.FC<PortfolioEditorModalProps> = ({
                 required
               />
             )}
+
+            {(mediaType === 'video' || /\.(mp4|webm|mov|ogg|m4v)/i.test(mediaUrl)) && (
+              <div className="pt-2">
+                <Input
+                  label="Thumbnail / Poster Image URL (Optional)"
+                  placeholder="https://images.unsplash.com/... (image displayed before video plays)"
+                  value={thumbnailUrl}
+                  onChange={(e) => setThumbnailUrl(e.target.value)}
+                  helperText="Recommended for video cards and featured preview thumbnails"
+                />
+              </div>
+            )}
           </div>
 
           {/* Description */}
