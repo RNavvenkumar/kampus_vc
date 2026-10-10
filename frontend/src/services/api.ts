@@ -1226,6 +1226,43 @@ export async function completeMediaUpload(uploadId: string): Promise<{ asset: Me
   return response.data.data;
 }
 
+export async function directUploadMedia(
+  file: File,
+  intendedUse = 'project_deliverable'
+): Promise<{ asset: MediaAsset; accessUrl: string }> {
+  const base64Data = await new Promise<string>((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result as string);
+    reader.onerror = (err) => reject(err);
+    reader.readAsDataURL(file);
+  });
+
+  const response = await apiClient.post<{
+    message: string;
+    data: { asset: MediaAsset; accessUrl: string };
+  }>('/media/direct', {
+    base64Data,
+    filename: file.name,
+    mimeType: file.type,
+    intendedUse
+  });
+  return response.data.data;
+}
+
+export async function attachExternalMedia(params: {
+  url: string;
+  filename?: string;
+  mimeType?: string;
+  category?: 'image' | 'video';
+  intendedUse?: string;
+}): Promise<{ asset: MediaAsset; accessUrl: string }> {
+  const response = await apiClient.post<{
+    message: string;
+    data: { asset: MediaAsset; accessUrl: string };
+  }>('/media/external', params);
+  return response.data.data;
+}
+
 export async function getMediaAsset(assetId: string): Promise<{ asset: MediaAsset; accessUrl: string }> {
   const response = await apiClient.get<{ data: { asset: MediaAsset; accessUrl: string } }>(
     `/media/assets/${assetId}`
@@ -1396,6 +1433,11 @@ export async function getCreatorReviews(
 export async function getBrandReviews(): Promise<ReviewItem[]> {
   const response = await apiClient.get<{ success: boolean; data: ReviewItem[] }>('/projects/brand/reviews');
   return response.data.data;
+}
+
+export async function resetDemoData(): Promise<{ message: string; stats: Record<string, number> }> {
+  const response = await apiClient.post<{ message: string; stats: Record<string, number> }>('/seed');
+  return response.data;
 }
 
 

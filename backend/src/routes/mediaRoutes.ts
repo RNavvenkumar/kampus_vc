@@ -7,7 +7,9 @@ import {
   deleteMediaAsset,
   getMyMediaAssets,
   handleLocalStorageUpload,
-  handleLocalStorageDownload
+  handleLocalStorageDownload,
+  handleDirectBase64Upload,
+  handleCreateExternalMediaAsset
 } from '../controllers/mediaController.js';
 import { requireAuth, optionalAuth } from '../middleware/authMiddleware.js';
 
@@ -29,7 +31,11 @@ router.all('/local-storage/*', (req, res) => {
   });
 });
 
-// 2. Authenticated Upload Lifecycle
+// 2. Direct File Upload & External Media Attachment
+router.post('/direct', requireAuth, handleDirectBase64Upload);
+router.post('/external', requireAuth, handleCreateExternalMediaAsset);
+
+// 3. Authenticated Upload Lifecycle
 router.post('/uploads', requireAuth, initiateMediaUpload);
 router.post('/uploads/:uploadId/complete', requireAuth, completeMediaUpload);
 

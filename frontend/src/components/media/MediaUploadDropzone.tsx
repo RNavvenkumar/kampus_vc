@@ -15,6 +15,7 @@ import {
   initiateMediaUpload,
   uploadFileToStorage,
   completeMediaUpload,
+  directUploadMedia,
   extractErrorMessage
 } from '../../services/api';
 import { MediaAsset } from '../../types';
@@ -119,12 +120,24 @@ export const MediaUploadDropzone: React.FC<MediaUploadDropzoneProps> = ({
       setUploadStatus('ready');
       onUploadComplete(completeData.asset, completeData.accessUrl);
     } catch (err: any) {
-      console.error('Upload process failed:', err);
-      const msg = extractErrorMessage(err, 'Failed to complete media upload.');
-      setErrorMessage(msg);
-      setUploadStatus('error');
+      console.warn('Standard signed upload failed, attempting direct base64 fallback...', err);
+      try {
+        setUploadStatus('uploading');
+        setProgress(65);
+        const directRes = await directUploadMedia(file, intendedUse);
+        setProgress(100);
+        setUploadedAsset(directRes.asset);
+        setPreviewUrl(directRes.accessUrl);
+        setUploadStatus('ready');
+        onUploadComplete(directRes.asset, directRes.accessUrl);
+      } catch (fallbackErr: any) {
+        console.error('Direct fallback upload also failed:', fallbackErr);
+        const msg = extractErrorMessage(fallbackErr, 'Failed to complete media upload.');
+        setErrorMessage(msg);
+        setUploadStatus('error');
+      }
     }
-  }, [allowedMimes, onUploadComplete]);
+  }, [allowedMimes, onUploadComplete, intendedUse]);
 
   const onDragOver = (e: React.DragEvent) => {
     e.preventDefault();

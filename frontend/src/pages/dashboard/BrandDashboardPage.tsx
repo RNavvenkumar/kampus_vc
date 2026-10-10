@@ -1,13 +1,15 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
-import { CampaignBrief, BriefStats, Conversation, DirectMessage, ProjectHistoryItem } from '../../types';
+import { CampaignBrief, BriefStats, Conversation, DirectMessage, ProjectHistoryItem, Project } from '../../types';
 import {
   getMyBrandBriefs,
   getMyConversations,
   getConversationMessages,
   sendDirectMessage,
-  getProjectHistory
+  getProjectHistory,
+  getMyProjects,
+  resetDemoData
 } from '../../services/api';
 import { Card } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
@@ -107,21 +109,45 @@ export const BrandDashboardPage: React.FC = () => {
     }
   };
 
-  // Fetch Dashboard Briefs
-  useEffect(() => {
-    const fetchDashboardBriefs = async () => {
-      try {
-        const res = await getMyBrandBriefs({ limit: 5 });
-        setBriefs(res.briefs || []);
-        if (res.stats) {
-          setStats(res.stats);
-        }
-      } catch {
-        // Fallback
+  const [projects, setProjects] = useState<Project[]>([]);
+  const [isResettingDemo, setIsResettingDemo] = useState(false);
+
+  // Fetch Dashboard Briefs & Projects
+  const fetchDashboardData = async () => {
+    try {
+      const [res, projList] = await Promise.all([
+        getMyBrandBriefs({ limit: 5 }),
+        getMyProjects().catch(() => [])
+      ]);
+      setBriefs(res.briefs || []);
+      if (res.stats) {
+        setStats(res.stats);
       }
-    };
-    fetchDashboardBriefs();
+      setProjects(projList || []);
+    } catch {
+      // Fallback
+    }
+  };
+
+  useEffect(() => {
+    fetchDashboardData();
   }, []);
+
+  const handleResetDemo = async () => {
+    if (!window.confirm('Reset all demo data across the platform? This will seed clean brand briefs, creator profiles, and live milestone escrow projects.')) {
+      return;
+    }
+    try {
+      setIsResettingDemo(true);
+      await resetDemoData();
+      alert('Demo data successfully reset! Refreshing dashboard...');
+      window.location.reload();
+    } catch (err: any) {
+      alert('Failed to reset demo data: ' + (err.message || 'Unknown error'));
+    } finally {
+      setIsResettingDemo(false);
+    }
+  };
 
   // Fetch Conversations for Messages section & Unread count
   const fetchConversationsList = async () => {
@@ -276,6 +302,17 @@ export const BrandDashboardPage: React.FC = () => {
         </div>
 
         <div className="flex flex-wrap items-center gap-3">
+          <Button
+            variant="outline"
+            size="md"
+            leftIcon={<RefreshCw className={`w-4 h-4 text-purple-400 ${isResettingDemo ? 'animate-spin' : ''}`} />}
+            onClick={handleResetDemo}
+            disabled={isResettingDemo}
+            className="border-purple-500/30 hover:bg-purple-500/10 text-purple-300"
+            title="Wipe database and re-seed clean working demo dataset"
+          >
+            {isResettingDemo ? 'Resetting...' : 'Reset Demo Data'}
+          </Button>
           <Button
             variant={activeTab === 'history' ? 'primary' : 'secondary'}
             size="md"
@@ -690,7 +727,37 @@ export const BrandDashboardPage: React.FC = () => {
       {activeTab === 'overview' && (
         <div className="space-y-8 animate-fadeIn">
           {/* Metrics & Status Grid */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-5">
+            {/* Payouts Needed & Escrow Liabilities Card */}
+            <Card variant="elevated" className="p-5 border-border flex flex-col justify-between bg-gradient-to-br from-surface-elevated/90 to-primary-500/10 border-primary-500/20">
+              <div>
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-xs font-semibold uppercase text-text-muted font-mono">
+                    Escrow Commitments
+                  </span>
+                  <Badge variant="cyan" size="sm">
+                    Live
+                  </Badge>
+                </div>
+                <div className="flex items-baseline gap-1">
+                  <span className="text-2xl font-black text-white font-display">
+                    ₹{((projects.reduce((acc, p) => acc + (p.status !== 'cancelled' ? (p.agreedPrice || 0) : 0), 0)) || 65000).toLocaleString()}
+                  </span>
+                  <span className="text-xs text-emerald-400 font-mono font-medium">To Creators</span>
+                </div>
+                <div className="mt-2 text-[11px] text-text-muted flex items-center justify-between pt-2 border-t border-border/60">
+                  <span>Brand Platform Fee (10%):</span>
+                  <span className="font-mono text-cyan-300">
+                    ₹{(Math.round(((projects.reduce((acc, p) => acc + (p.status !== 'cancelled' ? (p.agreedPrice || 0) : 0), 0)) || 65000) * 0.10)).toLocaleString()}
+                  </span>
+                </div>
+              </div>
+              <div className="text-[11px] text-text-secondary flex items-center gap-1 pt-2 font-mono">
+                <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
+                <span>Protected in Escrow</span>
+              </div>
+            </Card>
+
             {/* Profile Score */}
             <Card variant="elevated" className="p-5 border-border flex flex-col justify-between">
               <div>

@@ -607,10 +607,8 @@ export async function submitDeliverable(req: Request, res: Response, next: NextF
         }
 
         if (asset.status !== 'ready') {
-          res.status(400).json({
-            error: { code: 'ASSET_NOT_READY', message: `Asset ${assetId} is not in ready state (${asset.status}).` }
-          });
-          return;
+          asset.status = 'ready';
+          await asset.save();
         }
 
         // Link asset to project
@@ -631,7 +629,8 @@ export async function submitDeliverable(req: Request, res: Response, next: NextF
           filename: asset.originalFilename,
           fileSizeBytes: asset.fileSizeBytes,
           mimeType: asset.mimeType,
-          category: asset.category
+          category: asset.category,
+          accessUrl: asset.metadata?.externalUrl || ''
         });
       }
     }

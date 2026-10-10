@@ -67,13 +67,13 @@ export function createApp() {
   // Request body parsing with sensible limits and rawBody retention for webhook verification
   app.use(
     express.json({
-      limit: '2mb',
+      limit: '50mb',
       verify: (req: any, _res, buf) => {
         req.rawBody = buf;
       }
     })
   );
-  app.use(express.urlencoded({ extended: true, limit: '2mb' }));
+  app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 
   // Request logger
   app.use(requestLogger);

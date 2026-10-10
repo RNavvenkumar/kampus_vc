@@ -70,7 +70,10 @@ export class LocalStorageProvider implements IStorageProvider {
 
     const payload = `${action}:${objectKey}:${exp}`;
     const expected = crypto.createHmac('sha256', this.secret).update(payload).digest('hex');
-    return crypto.timingSafeEqual(Buffer.from(token, 'hex'), Buffer.from(expected, 'hex'));
+    const bufA = Buffer.from(token || '', 'hex');
+    const bufB = Buffer.from(expected, 'hex');
+    if (bufA.length !== bufB.length || bufA.length === 0) return false;
+    return crypto.timingSafeEqual(bufA, bufB);
   }
 
   async isAvailable(): Promise<boolean> {

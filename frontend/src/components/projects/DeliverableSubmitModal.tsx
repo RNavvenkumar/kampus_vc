@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import { X, Send, Link as LinkIcon, Paperclip, CheckCircle } from 'lucide-react';
+import { X, Send, Link as LinkIcon, CheckCircle, Sparkles, Film, Image as ImageIcon, Loader2, Plus } from 'lucide-react';
 import { ProjectMilestone, MediaAsset, DeliverableSubmission } from '../../types';
-import { submitDeliverable, extractErrorMessage } from '../../services/api';
+import { submitDeliverable, attachExternalMedia, extractErrorMessage } from '../../services/api';
 import { Button } from '../ui/Button';
 import { Card } from '../ui/Card';
 import { MediaUploadDropzone } from '../media/MediaUploadDropzone';
@@ -14,6 +14,27 @@ interface DeliverableSubmitModalProps {
   onSuccess: (submission: DeliverableSubmission) => void;
 }
 
+const DEMO_PRESETS = [
+  {
+    title: '🎬 3D Motion Reel (MP4)',
+    url: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4',
+    filename: 'Nike_AirMax_Hero_Motion_Reel_4K.mp4',
+    category: 'video' as const
+  },
+  {
+    title: '🖼️ 4K Sneaker Hero Keyframe (PNG)',
+    url: 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=1600&auto=format&fit=crop&q=85',
+    filename: 'Nike_AirMax_2027_Keyframe_Render.png',
+    category: 'image' as const
+  },
+  {
+    title: '⚡ Cyberpunk Color Pass (PNG)',
+    url: 'https://images.unsplash.com/photo-1552346154-21d32810aba3?w=1600&auto=format&fit=crop&q=85',
+    filename: 'ColorGrade_Turnaround_Shot_01.png',
+    category: 'image' as const
+  }
+];
+
 export const DeliverableSubmitModal: React.FC<DeliverableSubmitModalProps> = ({
   projectId,
   milestone,
@@ -21,11 +42,17 @@ export const DeliverableSubmitModal: React.FC<DeliverableSubmitModalProps> = ({
   onClose,
   onSuccess
 }) => {
-  const [notes, setNotes] = useState('');
-  const [externalLinks, setExternalLinks] = useState<string[]>(['']);
+  const [notes, setNotes] = useState(
+    `Prepared the initial high-fidelity renders and motion cut for Milestone #${milestone.order}. Incorporates brand color palette, photorealistic lighting, and 4K camera turnarounds.`
+  );
+  const [externalLinks, setExternalLinks] = useState<string[]>(['https://www.figma.com/file/demo/Nike-AirMax-2027-Deliverables']);
   const [attachedAssets, setAttachedAssets] = useState<{ asset: MediaAsset; accessUrl: string }[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const [mediaUrlInput, setMediaUrlInput] = useState('');
+  const [isAttachingUrl, setIsAttachingUrl] = useState(false);
+  const [dropzoneKey, setDropzoneKey] = useState(0);
 
   if (!isOpen) return null;
 
@@ -45,12 +72,31 @@ export const DeliverableSubmitModal: React.FC<DeliverableSubmitModalProps> = ({
     setExternalLinks(externalLinks.filter((_, i) => i !== index));
   };
 
-  const [dropzoneKey, setDropzoneKey] = useState(0);
-
   const handleAssetUploaded = (asset: MediaAsset, accessUrl: string) => {
     setAttachedAssets((prev) => [...prev, { asset, accessUrl }]);
-    // Increment dropzoneKey to allow uploading another file immediately
     setDropzoneKey((prev) => prev + 1);
+  };
+
+  const handleAttachMediaUrl = async (urlToAttach: string, defaultFilename?: string, defaultCategory?: 'image' | 'video') => {
+    if (!urlToAttach || !urlToAttach.trim()) return;
+    try {
+      setIsAttachingUrl(true);
+      setError(null);
+      const isVideo = defaultCategory === 'video' || /\.(mp4|webm|mov)$/i.test(urlToAttach);
+      const filename = defaultFilename || urlToAttach.split('/').pop()?.split('?')[0] || (isVideo ? 'deliverable-video.mp4' : 'deliverable-preview.png');
+      const res = await attachExternalMedia({
+        url: urlToAttach.trim(),
+        filename,
+        category: defaultCategory || (isVideo ? 'video' : 'image'),
+        intendedUse: 'project_deliverable'
+      });
+      setAttachedAssets((prev) => [...prev, { asset: res.asset, accessUrl: res.accessUrl }]);
+      setMediaUrlInput('');
+    } catch (err: any) {
+      setError(extractErrorMessage(err, 'Failed to attach media link.'));
+    } finally {
+      setIsAttachingUrl(false);
+    }
   };
 
   const removeAsset = (assetId: string) => {
@@ -90,10 +136,10 @@ export const DeliverableSubmitModal: React.FC<DeliverableSubmitModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm overflow-y-auto">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-md overflow-y-auto">
       <Card className="w-full max-w-2xl bg-[#0F131C] border-[#1F2937] text-white rounded-2xl shadow-2xl overflow-hidden my-8">
         {/* Header */}
-        <div className="p-6 border-b border-[#1F2937] flex items-center justify-between">
+        <div className="p-6 border-b border-[#1F2937] flex items-center justify-between bg-gradient-to-r from-emerald-950/20 to-transparent">
           <div>
             <span className="text-xs font-semibold text-emerald-400 uppercase tracking-wider">
               Milestone #{milestone.order} Submission
@@ -139,17 +185,17 @@ export const DeliverableSubmitModal: React.FC<DeliverableSubmitModalProps> = ({
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
               placeholder="Detail what you've prepared in this version, creative choices made, or instructions for the brand client to review..."
-              rows={4}
+              rows={3}
               required
               className="w-full bg-[#161B26] border border-[#2B3545] rounded-xl px-4 py-3 text-sm text-white placeholder-gray-500 focus:outline-none focus:border-emerald-500 transition-colors resize-none"
             />
           </div>
 
-          {/* Media File Upload (Dropzone) */}
-          <div>
-            <div className="flex items-center justify-between mb-2">
+          {/* Media Attachments Section */}
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
               <label className="text-xs font-semibold text-gray-300 uppercase tracking-wider">
-                Upload Deliverables (Images, MP4, MOV, WebM up to 250MB)
+                Upload Videos & Photos for Review
               </label>
               {attachedAssets.length > 0 && (
                 <button
@@ -157,60 +203,115 @@ export const DeliverableSubmitModal: React.FC<DeliverableSubmitModalProps> = ({
                   onClick={() => setDropzoneKey((k) => k + 1)}
                   className="text-xs text-emerald-400 hover:text-emerald-300 font-medium"
                 >
-                  + Add Another File
+                  + Upload Another File
                 </button>
               )}
             </div>
+
+            {/* Quick Demo Presets */}
+            <div className="p-3 rounded-xl bg-[#121722] border border-[#1F2937] space-y-2">
+              <div className="flex items-center gap-1.5 text-xs text-gray-400">
+                <Sparkles className="w-3.5 h-3.5 text-amber-400" />
+                <span>Quick Demo Assets (1-Click Attach for Instant Testing):</span>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {DEMO_PRESETS.map((preset, idx) => (
+                  <button
+                    key={idx}
+                    type="button"
+                    onClick={() => handleAttachMediaUrl(preset.url, preset.filename, preset.category)}
+                    disabled={isAttachingUrl}
+                    className="text-xs px-2.5 py-1.5 rounded-lg bg-emerald-950/40 border border-emerald-500/30 text-emerald-300 hover:bg-emerald-900/50 hover:border-emerald-400 transition-all flex items-center gap-1.5"
+                  >
+                    <span>{preset.title}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Direct Media URL Input */}
+            <div className="flex items-center gap-2">
+              <input
+                type="url"
+                value={mediaUrlInput}
+                onChange={(e) => setMediaUrlInput(e.target.value)}
+                placeholder="Or paste direct image / video URL (e.g. https://...)"
+                className="flex-1 bg-[#161B26] border border-[#2B3545] rounded-xl px-3 py-2 text-xs text-white placeholder-gray-500 focus:outline-none focus:border-emerald-500"
+              />
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => handleAttachMediaUrl(mediaUrlInput)}
+                disabled={!mediaUrlInput.trim() || isAttachingUrl}
+                className="shrink-0"
+              >
+                {isAttachingUrl ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Plus className="w-3.5 h-3.5 mr-1" />}
+                Attach URL
+              </Button>
+            </div>
+
+            {/* Media Upload Dropzone */}
             <MediaUploadDropzone
               key={dropzoneKey}
               onUploadComplete={handleAssetUploaded}
               category="all"
               intendedUse="project_deliverable"
-              label="Drop deliverable image or video render"
+              label="Drop deliverable image (PNG, JPG) or video reel (MP4, MOV)"
             />
 
-            {/* Attached Assets List */}
+            {/* Attached Assets Gallery */}
             {attachedAssets.length > 0 && (
               <div className="mt-3 space-y-2">
                 <span className="text-xs text-gray-400 font-medium">
-                  {attachedAssets.length} file(s) attached to this deliverable:
+                  {attachedAssets.length} deliverable file(s) ready to send:
                 </span>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                  {attachedAssets.map(({ asset, accessUrl }) => (
-                    <div
-                      key={asset.id}
-                      className="p-2.5 rounded-lg bg-[#161B26] border border-[#2B3545] flex items-center justify-between text-xs gap-2"
-                    >
-                      <div className="flex items-center gap-2.5 truncate">
-                        {asset.mimeType?.startsWith('image/') || accessUrl ? (
-                          <img
-                            src={accessUrl || asset.accessUrl || ''}
-                            alt=""
-                            className="w-8 h-8 rounded object-cover bg-black/40 border border-white/10 shrink-0"
-                            onError={(e) => {
-                              (e.target as HTMLElement).style.display = 'none';
-                            }}
-                          />
-                        ) : (
-                          <Paperclip className="w-4 h-4 text-emerald-400 shrink-0" />
-                        )}
-                        <div className="truncate">
-                          <p className="text-gray-200 font-medium truncate">{asset.originalFilename}</p>
-                          <p className="text-[10px] text-gray-400">
-                            {(asset.fileSizeBytes / (1024 * 1024)).toFixed(1)} MB • {asset.mimeType?.split('/')[1]?.toUpperCase()}
-                          </p>
-                        </div>
-                      </div>
-                      <button
-                        type="button"
-                        onClick={() => removeAsset(asset.id)}
-                        className="text-gray-400 hover:text-red-400 p-1 rounded transition-colors"
-                        title="Remove file"
+                  {attachedAssets.map(({ asset, accessUrl }) => {
+                    const isVid = asset.category === 'video' || asset.mimeType?.startsWith('video/');
+                    const url = accessUrl || asset.accessUrl || '';
+                    return (
+                      <div
+                        key={asset.id}
+                        className="p-2.5 rounded-lg bg-[#161B26] border border-emerald-500/30 flex items-center justify-between text-xs gap-2"
                       >
-                        <X className="w-4 h-4" />
-                      </button>
-                    </div>
-                  ))}
+                        <div className="flex items-center gap-2.5 truncate">
+                          {isVid ? (
+                            <div className="w-9 h-9 rounded bg-emerald-950/60 border border-emerald-500/40 flex items-center justify-center shrink-0">
+                              <Film className="w-4 h-4 text-emerald-400" />
+                            </div>
+                          ) : url ? (
+                            <img
+                              src={url}
+                              alt=""
+                              className="w-9 h-9 rounded object-cover bg-black/40 border border-white/10 shrink-0"
+                              onError={(e) => {
+                                (e.target as HTMLElement).style.display = 'none';
+                              }}
+                            />
+                          ) : (
+                            <div className="w-9 h-9 rounded bg-gray-800 flex items-center justify-center shrink-0">
+                              <ImageIcon className="w-4 h-4 text-emerald-400" />
+                            </div>
+                          )}
+                          <div className="truncate">
+                            <p className="text-gray-200 font-medium truncate">{asset.originalFilename}</p>
+                            <p className="text-[10px] text-gray-400">
+                              {asset.category === 'video' ? '🎬 Video Render' : '🖼️ Image Keyframe'} • {asset.mimeType?.split('/')[1]?.toUpperCase() || 'MEDIA'}
+                            </p>
+                          </div>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => removeAsset(asset.id)}
+                          className="text-gray-400 hover:text-red-400 p-1 rounded transition-colors"
+                          title="Remove file"
+                        >
+                          <X className="w-4 h-4" />
+                        </button>
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
             )}

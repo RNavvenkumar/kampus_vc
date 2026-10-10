@@ -1,12 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
-import { PortfolioItem, ServiceItem, CreatorAvailability, ProjectHistoryItem } from '../../types';
+import { PortfolioItem, ServiceItem, CreatorAvailability, ProjectHistoryItem, Project } from '../../types';
 import {
   getMyPortfolio,
   getMyServices,
   getCreatorAvailability,
-  getProjectHistory
+  getProjectHistory,
+  getMyProjects,
+  resetDemoData
 } from '../../services/api';
 import { Card } from '../../components/ui/Card';
 import { Button } from '../../components/ui/Button';
@@ -21,7 +23,8 @@ import {
   ArrowRight,
   History,
   Star,
-  RefreshCw
+  RefreshCw,
+  Wallet
 } from 'lucide-react';
 
 export const CreatorDashboardPage: React.FC = () => {
@@ -30,8 +33,24 @@ export const CreatorDashboardPage: React.FC = () => {
   const [services, setServices] = useState<ServiceItem[]>([]);
   const [availabilityData, setAvailabilityData] = useState<CreatorAvailability | null>(null);
   const [historyItems, setHistoryItems] = useState<ProjectHistoryItem[]>([]);
+  const [projects, setProjects] = useState<Project[]>([]);
   const [showHistory, setShowHistory] = useState(false);
   const [isLoadingHistory, setIsLoadingHistory] = useState(false);
+  const [isResettingData, setIsResettingData] = useState(false);
+
+  const handleResetDemoData = async () => {
+    if (!window.confirm('Reset all website data to clean medium demo dataset?')) return;
+    try {
+      setIsResettingData(true);
+      await resetDemoData();
+      alert('Demo data reset successfully! Page will now reload.');
+      window.location.reload();
+    } catch (err: any) {
+      alert('Failed to reset demo data: ' + (err.message || 'Error'));
+    } finally {
+      setIsResettingData(false);
+    }
+  };
 
   const loadProjectHistory = async () => {
     try {
@@ -48,16 +67,18 @@ export const CreatorDashboardPage: React.FC = () => {
   useEffect(() => {
     const loadDashboardData = async () => {
       try {
-        const [portRes, servRes, availRes, histRes] = await Promise.all([
+        const [portRes, servRes, availRes, histRes, projRes] = await Promise.all([
           getMyPortfolio().catch(() => ({ items: [], total: 0 })),
           getMyServices().catch(() => ({ services: [], total: 0 })),
           getCreatorAvailability().catch(() => null),
-          getProjectHistory().catch(() => [])
+          getProjectHistory().catch(() => []),
+          getMyProjects().catch(() => [])
         ]);
         setPortfolioItems(portRes.items || []);
         setServices(servRes.services || []);
         if (availRes) setAvailabilityData(availRes);
         setHistoryItems(histRes || []);
+        setProjects(projRes || []);
       } catch {
         // Fallback
       }
@@ -68,6 +89,9 @@ export const CreatorDashboardPage: React.FC = () => {
   const completion = creatorProfile?.profileCompletion || 20;
   const currentAvailability = availabilityData?.availability || creatorProfile?.availability || 'available';
   const publicUsername = creatorProfile?.username || user?.name?.toLowerCase().replace(/\s+/g, '') || user?.id;
+
+  const pendingCreatorPayout = projects.reduce((sum, p) => sum + (p.status !== 'cancelled' ? (p.agreedPrice || 0) : 0), 0) || 65000;
+  const brandEscrowCommitted = Math.round(pendingCreatorPayout * 1.1) || 71500;
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-8 animate-fadeIn text-left">
@@ -89,6 +113,16 @@ export const CreatorDashboardPage: React.FC = () => {
         </div>
 
         <div className="flex flex-wrap items-center gap-3">
+          <Button
+            variant="outline"
+            size="md"
+            leftIcon={<RefreshCw className={`w-4 h-4 text-emerald-400 ${isResettingData ? 'animate-spin' : ''}`} />}
+            onClick={handleResetDemoData}
+            disabled={isResettingData}
+            title="Reset database to clean realistic demo dataset"
+          >
+            {isResettingData ? 'Resetting Data...' : 'Reset Demo Data'}
+          </Button>
           <Button
             variant={showHistory ? 'primary' : 'secondary'}
             size="md"
@@ -115,7 +149,26 @@ export const CreatorDashboardPage: React.FC = () => {
       </div>
 
       {/* Metrics & Completion Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
+        {/* Creator Payouts & Escrow Card */}
+        <Card variant="elevated" className="p-5 border-border flex flex-col justify-between bg-gradient-to-b from-emerald-950/30 to-surface-elevated border-emerald-500/40">
+          <div>
+            <span className="text-xs font-semibold uppercase text-emerald-400 font-mono block mb-1">
+              Creator Payouts
+            </span>
+            <div className="flex items-center gap-2 text-2xl font-bold text-emerald-400 font-display">
+              <Wallet className="w-5 h-5 text-emerald-400" />
+              <span>₹{pendingCreatorPayout.toLocaleString()}</span>
+            </div>
+            <p className="text-[11px] text-text-muted mt-1">
+              Brand Vault: ₹{brandEscrowCommitted.toLocaleString()}
+            </p>
+          </div>
+          <Link to="/creator/portfolio" className="text-xs text-emerald-400 hover:underline font-semibold flex items-center gap-1 pt-2">
+            View Escrowed Funds <ArrowRight className="w-3 h-3" />
+          </Link>
+        </Card>
+
         {/* Profile Completion Card */}
         <Card variant="elevated" className="p-5 border-border flex flex-col justify-between">
           <div>

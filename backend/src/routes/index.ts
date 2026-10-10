@@ -14,6 +14,7 @@ import { brandAiRoutes } from './brandAiRoutes.js';
 import { creativeDraftRoutes } from './creativeDraftRoutes.js';
 import mediaRouter from './mediaRoutes.js';
 import { paymentRouter } from './paymentRoutes.js';
+import { seedRouter } from './seedRoutes.js';
 
 export const apiRouter = Router();
 
@@ -62,6 +63,9 @@ apiRouter.use('/payments', paymentRouter);
 // Mount Public Discovery
 apiRouter.use('/briefs', publicBriefsRouter);
 apiRouter.use('/creators', publicCreatorsRouter);
+
+// Mount Database Seed & Reset
+apiRouter.use('/seed', seedRouter);
 
 // Future Phase Routes (e.g. /messages, /payments)
 apiRouter.all('/v1/*', (_req, res) => {

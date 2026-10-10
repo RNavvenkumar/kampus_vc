@@ -15,7 +15,7 @@ import {
   CheckCircle2,
   Play,
   Download,
-  Paperclip,
+  ExternalLink,
   ChevronDown,
   ChevronUp,
   CreditCard
@@ -556,30 +556,76 @@ export const ProjectDetailPage: React.FC = () => {
                                   {sub.submissionNotes}
                                 </p>
 
-                                {/* Attached Files */}
+                                {/* Attached Files & Previews */}
                                 {sub.attachments && sub.attachments.length > 0 && (
-                                  <div className="flex flex-wrap gap-2 pt-1">
-                                    {sub.attachments.map((att, aIdx) => (
-                                      <div
-                                        key={aIdx}
-                                        className="p-1.5 px-2 rounded-lg bg-[#161B26] border border-[#2B3545] flex items-center gap-2 text-[11px]"
-                                      >
-                                        <Paperclip className="w-3.5 h-3.5 text-emerald-400" />
-                                        <span className="text-gray-200 truncate max-w-[140px]">
-                                          {att.filename}
-                                        </span>
-                                        {att.accessUrl && (
-                                          <a
-                                            href={att.accessUrl}
-                                            target="_blank"
-                                            rel="noreferrer"
-                                            className="text-emerald-400 hover:text-emerald-300 ml-1"
-                                            title="Download file"
+                                  <div className="space-y-2 pt-1">
+                                    <span className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider block">
+                                      Deliverables ({sub.attachments.length}):
+                                    </span>
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                                      {sub.attachments.map((att, aIdx) => {
+                                        const isVideo = att.category === 'video' || att.mimeType?.startsWith('video/') || att.filename?.endsWith('.mp4');
+                                        return (
+                                          <div
+                                            key={aIdx}
+                                            className="p-2 rounded-xl bg-[#131822] border border-[#2B3545] space-y-1.5"
                                           >
-                                            <Download className="w-3 h-3" />
-                                          </a>
-                                        )}
-                                      </div>
+                                            {att.accessUrl && (
+                                              isVideo ? (
+                                                <video
+                                                  src={att.accessUrl}
+                                                  controls
+                                                  preload="metadata"
+                                                  className="w-full h-32 rounded-lg bg-black object-contain border border-white/5"
+                                                />
+                                              ) : (
+                                                <a href={att.accessUrl} target="_blank" rel="noreferrer" className="block overflow-hidden rounded-lg">
+                                                  <img
+                                                    src={att.accessUrl}
+                                                    alt={att.filename}
+                                                    className="w-full h-32 rounded-lg object-cover bg-black/40 hover:scale-105 transition-transform"
+                                                  />
+                                                </a>
+                                              )
+                                            )}
+                                            <div className="flex items-center justify-between text-[11px] pt-1">
+                                              <span className="text-gray-200 font-medium truncate max-w-[170px]" title={att.filename}>
+                                                {att.filename}
+                                              </span>
+                                              {att.accessUrl && (
+                                                <a
+                                                  href={att.accessUrl}
+                                                  target="_blank"
+                                                  rel="noreferrer"
+                                                  className="text-emerald-400 hover:text-emerald-300 flex items-center gap-1 shrink-0"
+                                                  title="View deliverable"
+                                                >
+                                                  <Download className="w-3 h-3" />
+                                                  <span>View</span>
+                                                </a>
+                                              )}
+                                            </div>
+                                          </div>
+                                        );
+                                      })}
+                                    </div>
+                                  </div>
+                                )}
+
+                                {/* External Links */}
+                                {sub.externalLinks && sub.externalLinks.length > 0 && (
+                                  <div className="flex flex-wrap gap-2 pt-1">
+                                    {sub.externalLinks.map((link, lIdx) => (
+                                      <a
+                                        key={lIdx}
+                                        href={link}
+                                        target="_blank"
+                                        rel="noreferrer"
+                                        className="p-1 px-2.5 rounded-lg bg-[#161B26] border border-blue-500/30 text-blue-300 hover:text-blue-200 flex items-center gap-1.5 text-[11px]"
+                                      >
+                                        <ExternalLink className="w-3 h-3" />
+                                        <span className="truncate max-w-[200px]">{link}</span>
+                                      </a>
                                     ))}
                                   </div>
                                 )}

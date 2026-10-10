@@ -344,7 +344,7 @@ export const getMediaAsset = async (req: Request, res: Response): Promise<void> 
     }
 
     const provider = storageService.getProvider();
-    const accessUrl = await provider.getSignedDownloadUrl(asset.objectKey, asset.originalFilename);
+    const accessUrl = asset.metadata?.externalUrl || (await provider.getSignedDownloadUrl(asset.objectKey, asset.originalFilename));
 
     res.status(200).json({
       data: {
@@ -427,7 +427,7 @@ export const getMediaAssetAccessUrl = async (req: Request, res: Response): Promi
     }
 
     const provider = storageService.getProvider();
-    const accessUrl = await provider.getSignedDownloadUrl(asset.objectKey, asset.originalFilename);
+    const accessUrl = asset.metadata?.externalUrl || (await provider.getSignedDownloadUrl(asset.objectKey, asset.originalFilename));
 
     res.status(200).json({
       data: {
@@ -800,3 +800,140 @@ export const handleLocalStorageDownload = async (req: Request, res: Response): P
     });
   }
 };
+
+/**
+ * Direct file upload handler via base64 encoded payload.
+ * Eliminates multipart/multer dependency issues and ensures dependable uploads.
+ */
+export const handleDirectBase64Upload = async (req: Request, res: Response): Promise<void> => {
+  try {
+    if (!req.user) {
+      res.status(401).json({ error: { code: 'UNAUTHORIZED', message: 'Authentication required' } });
+      return;
+    }
+    const { base64Data, filename, mimeType, intendedUse } = req.body;
+    if (!base64Data || !filename) {
+      res.status(400).json({ error: { code: 'NO_FILE', message: 'base64Data and filename required' } });
+      return;
+    }
+
+    const cleanBase64 = base64Data.replace(/^data:[^;]+;base64,/, '');
+    const buffer = Buffer.from(cleanBase64, 'base64');
+    const isImage = (mimeType && mimeType.startsWith('image/')) || /\.(jpg|jpeg|png|webp|gif)$/i.test(filename);
+    const category: MediaCategory = isImage ? 'image' : 'video';
+    const sanitizedName = mediaValidationService.sanitizeFilename(filename);
+    const uniqueId = crypto.randomUUID();
+    const objectKey = `uploads/${req.user.id}/${uniqueId}-${sanitizedName}`;
+
+    const provider = storageService.getProvider();
+    let accessUrl = '';
+
+    if (provider instanceof LocalStorageProvider) {
+      const filePath = provider.safeResolvePath(objectKey);
+      const parentDir = path.dirname(filePath);
+      if (!fs.existsSync(parentDir)) {
+        fs.mkdirSync(parentDir, { recursive: true });
+      }
+      fs.writeFileSync(filePath, buffer);
+      accessUrl = await provider.getSignedDownloadUrl(objectKey, sanitizedName);
+    } else {
+      accessUrl = `/api/media/local-storage/${encodeURIComponent(objectKey)}`;
+    }
+
+    const asset = new MediaAsset({
+      userId: req.user.id,
+      storageProvider: 'local',
+      objectKey,
+      originalFilename: filename,
+      sanitizedFilename: sanitizedName,
+      mimeType: mimeType || (isImage ? 'image/png' : 'video/mp4'),
+      category,
+      fileSizeBytes: buffer.length,
+      status: 'ready',
+      visibility: 'public',
+      metadata: {
+        intendedUse: intendedUse || 'project_deliverable'
+      }
+    });
+
+    await asset.save();
+
+    res.status(201).json({
+      message: 'Direct upload successful',
+      data: {
+        asset,
+        accessUrl
+      }
+    });
+  } catch (err: any) {
+    console.error('Direct base64 upload failed:', err);
+    res.status(500).json({
+      error: {
+        code: 'UPLOAD_FAILED',
+        message: err.message || 'Direct upload processing error'
+      }
+    });
+  }
+};
+
+/**
+ * Directly create a ready MediaAsset from an external URL (e.g., cloud video/image URL).
+ */
+export const handleCreateExternalMediaAsset = async (req: Request, res: Response): Promise<void> => {
+  try {
+    if (!req.user) {
+      res.status(401).json({ error: { code: 'UNAUTHORIZED', message: 'Authentication required' } });
+      return;
+    }
+
+    const { url, filename, mimeType, category } = req.body;
+    if (!url || typeof url !== 'string' || !url.startsWith('http')) {
+      res.status(400).json({ error: { code: 'INVALID_URL', message: 'Valid URL starting with http/https is required' } });
+      return;
+    }
+
+    const isImage = category === 'image' || (mimeType && mimeType.startsWith('image/')) || /\.(jpg|jpeg|png|webp|gif)$/i.test(url);
+    const resolvedCategory: MediaCategory = isImage ? 'image' : 'video';
+    const resolvedMime = mimeType || (isImage ? 'image/png' : 'video/mp4');
+    const safeFilename = filename || url.split('/').pop()?.split('?')[0] || (isImage ? 'deliverable-asset.png' : 'deliverable-video.mp4');
+    const sanitizedName = mediaValidationService.sanitizeFilename(safeFilename);
+    const uniqueId = crypto.randomUUID();
+    const objectKey = `external/${req.user.id}/${uniqueId}-${sanitizedName}`;
+
+    const asset = new MediaAsset({
+      userId: req.user.id,
+      storageProvider: 'local',
+      objectKey,
+      originalFilename: safeFilename,
+      sanitizedFilename: sanitizedName,
+      mimeType: resolvedMime,
+      category: resolvedCategory,
+      fileSizeBytes: 2 * 1024 * 1024,
+      status: 'ready',
+      visibility: 'public',
+      metadata: {
+        externalUrl: url,
+        intendedUse: req.body.intendedUse || 'project_deliverable'
+      }
+    });
+
+    await asset.save();
+
+    res.status(201).json({
+      message: 'External asset attached successfully',
+      data: {
+        asset,
+        accessUrl: url
+      }
+    });
+  } catch (err: any) {
+    console.error('External media asset attachment failed:', err);
+    res.status(500).json({
+      error: {
+        code: 'ATTACHMENT_FAILED',
+        message: err.message || 'Failed to attach external media asset'
+      }
+    });
+  }
+};
+
