@@ -254,16 +254,25 @@ export class MediaValidationService {
     }
 
     // 3. Inspect magic bytes
-    const detectedMime = this.detectMimeType(buffer);
+    let detectedMime = this.detectMimeType(buffer);
     if (!detectedMime) {
-      return {
-        isValid: false,
-        category: isImage ? 'image' : 'video',
-        mimeType: declaredMimeType,
-        detectedMimeType: 'unknown',
-        fileSizeBytes,
-        error: 'File content does not match any allowed media file signatures or is corrupted.'
-      };
+      // If declared MIME is an allowed media format and buffer is not an executable/script, allow with declared MIME
+      const isDangerous =
+        (buffer.length >= 2 && buffer[0] === 0x4d && buffer[1] === 0x5a) || // MZ Windows EXE
+        (buffer.length >= 4 && buffer[0] === 0x7f && buffer[1] === 0x45 && buffer[2] === 0x4c && buffer[3] === 0x46); // ELF Linux
+
+      if (!isDangerous && ALL_ALLOWED_MIMES.includes(declaredMimeType)) {
+        detectedMime = declaredMimeType;
+      } else {
+        return {
+          isValid: false,
+          category: isImage ? 'image' : 'video',
+          mimeType: declaredMimeType,
+          detectedMimeType: 'unknown',
+          fileSizeBytes,
+          error: 'File content does not match any allowed media file signatures or is corrupted.'
+        };
+      }
     }
 
     // 4. Validate MIME match

@@ -56,15 +56,27 @@ export const MediaUploadDropzone: React.FC<MediaUploadDropzoneProps> = ({
   const allowedMimes = ALLOWED_MIME_TYPES[category] || ALLOWED_MIME_TYPES.all;
 
   const handleFileProcess = useCallback(async (file: File) => {
-    // 1. Client-side MIME validation
-    if (!allowedMimes.includes(file.type)) {
-      setErrorMessage(`Unsupported format (${file.type || 'unknown'}). Allowed: JPG, PNG, WebP, GIF, MP4, WebM, MOV.`);
+    // 1. Client-side MIME validation with extension fallback
+    let mimeType = file.type;
+    if (!mimeType) {
+      const ext = file.name.split('.').pop()?.toLowerCase();
+      if (ext === 'mp4' || ext === 'm4v') mimeType = 'video/mp4';
+      else if (ext === 'webm') mimeType = 'video/webm';
+      else if (ext === 'mov') mimeType = 'video/quicktime';
+      else if (ext === 'jpg' || ext === 'jpeg') mimeType = 'image/jpeg';
+      else if (ext === 'png') mimeType = 'image/png';
+      else if (ext === 'webp') mimeType = 'image/webp';
+      else if (ext === 'gif') mimeType = 'image/gif';
+    }
+
+    if (!mimeType || !allowedMimes.includes(mimeType)) {
+      setErrorMessage(`Unsupported format (${mimeType || file.name || 'unknown'}). Allowed: JPG, PNG, WebP, GIF, MP4, WebM, MOV.`);
       setUploadStatus('error');
       return;
     }
 
     // 2. Client-side size limit validation
-    const isImage = file.type.startsWith('image/');
+    const isImage = mimeType.startsWith('image/');
     const maxBytes = isImage ? 25 * 1024 * 1024 : 250 * 1024 * 1024;
     if (file.size > maxBytes) {
       setErrorMessage(`File is too large (${(file.size / (1024 * 1024)).toFixed(1)}MB). Limit: ${isImage ? '25MB' : '250MB'}.`);
@@ -80,7 +92,7 @@ export const MediaUploadDropzone: React.FC<MediaUploadDropzoneProps> = ({
       // Step A: Initiate upload on backend
       const initData = await initiateMediaUpload({
         filename: file.name,
-        mimeType: file.type,
+        mimeType,
         fileSizeBytes: file.size,
         category: isImage ? 'image' : 'video',
         intendedUse

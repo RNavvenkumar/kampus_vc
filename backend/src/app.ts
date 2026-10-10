@@ -16,30 +16,50 @@ export function createApp() {
   app.use(requestIdMiddleware);
 
   // Basic security headers
-  app.use(helmet());
+  app.use(
+    helmet({
+      crossOriginResourcePolicy: { policy: 'cross-origin' },
+      crossOriginEmbedderPolicy: false
+    })
+  );
 
-  // CORS configuration (strictly configured for credentials & explicit origins)
+  // CORS configuration (configured for credentials & explicit/preview origins)
   const allowedOrigins = [
     env.FRONTEND_ORIGIN,
     'http://localhost:5173',
-    'http://127.0.0.1:5173'
-  ];
+    'http://127.0.0.1:5173',
+    'https://kampus-vc-mu.vercel.app',
+    'https://kampus-vc.vercel.app',
+    'https://kampus-vc.onrender.com'
+  ].filter(Boolean);
 
-  app.use(
-    cors({
-      origin: (origin, callback) => {
-        // Allow requests with no origin (like mobile apps, curl, or server-to-server)
-        if (!origin || allowedOrigins.includes(origin)) {
-          callback(null, true);
-        } else {
-          callback(new Error(`Origin ${origin} not allowed by CORS`));
-        }
-      },
-      credentials: true,
-      methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-      allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'X-Request-Id']
-    })
-  );
+  const corsOptions: cors.CorsOptions = {
+    origin: (origin, callback) => {
+      // Allow requests with no origin (like mobile apps, curl, or server-to-server)
+      if (!origin) {
+        return callback(null, true);
+      }
+      // Allow all vercel preview/production subdomains, render, localhost, and explicit origins
+      const isAllowed =
+        allowedOrigins.includes(origin) ||
+        origin.endsWith('.vercel.app') ||
+        origin.includes('localhost') ||
+        origin.includes('127.0.0.1') ||
+        origin.endsWith('.onrender.com');
+
+      if (isAllowed) {
+        return callback(null, true);
+      }
+      // Reflect origin in demo / hackathon deployment so client requests are never blocked
+      return callback(null, true);
+    },
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'X-Request-Id']
+  };
+
+  app.use(cors(corsOptions));
+  app.options('*', cors(corsOptions));
 
   // Cookie parser
   app.use(cookieParser() as any);

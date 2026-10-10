@@ -75,6 +75,121 @@ async function logProjectActivity(params: {
   }
 }
 
+// Helper: Automatically add approved deliverable work to Creator's Portfolio Showcase
+async function addApprovedWorkToCreatorPortfolio(params: {
+  project: IProject;
+  milestone?: IProjectMilestone;
+  submission?: any;
+  brandName?: string;
+  creatorId: Types.ObjectId | string;
+}): Promise<void> {
+  try {
+    const { project, milestone, submission, brandName, creatorId } = params;
+    const creatorUser = await User.findById(creatorId).lean();
+    if (!creatorUser) return;
+
+    let profile = await CreatorProfile.findOne({ userId: creatorId });
+    if (!profile) {
+      profile = new CreatorProfile({
+        userId: creatorId,
+        displayName: creatorUser.name || 'Creator',
+        username: (creatorUser.name || 'creator').toLowerCase().replace(/[^a-z0-9]/g, '') + Math.floor(100 + Math.random() * 900)
+      });
+    }
+
+    const itemTitle = milestone
+      ? `${project.title} — ${milestone.title}`
+      : project.title;
+
+    // Avoid duplicate showcase items
+    const alreadyExists = profile.portfolioItems.some(
+      (item) => item.title === itemTitle || (item.projectUrl && item.projectUrl.includes(project._id.toString()) && (milestone ? item.title.includes(milestone.title) : true))
+    );
+    if (alreadyExists) {
+      return;
+    }
+
+    let mediaUrl = '';
+    let mediaType: 'image' | 'video' | 'project' = 'image';
+    let assetIdObj: Types.ObjectId | undefined;
+    let thumbnailUrl: string | undefined;
+
+    // Check submission attachments for media
+    if (submission?.attachments && submission.attachments.length > 0) {
+      const firstAtt = submission.attachments[0];
+      const asset = await MediaAsset.findById(firstAtt.assetId);
+      if (asset) {
+        asset.visibility = 'public';
+        await asset.save();
+        assetIdObj = asset._id as Types.ObjectId;
+
+        if (asset.category === 'video' || asset.mimeType?.startsWith('video/')) {
+          mediaType = 'video';
+        } else {
+          mediaType = 'image';
+        }
+
+        const provider = storageService.getProvider();
+        mediaUrl = await provider.getSignedDownloadUrl(asset.objectKey, asset.originalFilename);
+
+        // If video, check for thumbnail image in other attachments
+        if (mediaType === 'video' && submission.attachments.length > 1) {
+          const secondAtt = submission.attachments.find((att: any) => att.assetId?.toString() !== asset._id.toString());
+          if (secondAtt) {
+            const secondAsset = await MediaAsset.findById(secondAtt.assetId);
+            if (secondAsset && secondAsset.mimeType?.startsWith('image/')) {
+              thumbnailUrl = await provider.getSignedDownloadUrl(secondAsset.objectKey, secondAsset.originalFilename);
+            }
+          }
+        }
+      }
+    }
+
+    // Fallback to external links if provided
+    if (!mediaUrl && submission?.externalLinks && submission.externalLinks.length > 0) {
+      mediaUrl = submission.externalLinks[0];
+      mediaType = 'project';
+    }
+
+    // Fallback to project cover or high quality creative graphic
+    if (!mediaUrl) {
+      mediaUrl = (project as any).coverUrl || 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=1200&auto=format&fit=crop&q=80';
+      mediaType = 'image';
+    }
+
+    const resolvedBrandName = brandName || 'Brand Partner';
+
+    const newItem = {
+      id: new mongoose.Types.ObjectId().toString(),
+      title: itemTitle,
+      slug: itemTitle.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, ''),
+      description: submission?.submissionNotes || milestone?.description || project.agreedDescription || `Verified completed work for ${resolvedBrandName} on Kampus.VC.`,
+      category: (project as any).category || (project as any).briefId?.category || 'Creative Production',
+      tags: [(project as any).category || 'Client Work', 'Verified Delivery', resolvedBrandName].filter(Boolean),
+      creativeTools: ['Kampus.VC Production Studio'],
+      mediaType,
+      mediaUrl,
+      thumbnailUrl,
+      assetId: assetIdObj,
+      clientName: resolvedBrandName,
+      projectUrl: `/projects/${project._id}`,
+      completionDate: new Date(),
+      isFeatured: true,
+      displayOrder: 0,
+      visibility: 'public' as const,
+      createdAt: new Date(),
+      updatedAt: new Date()
+    };
+
+    // Add to top of creator's portfolio showcase
+    profile.portfolioItems.unshift(newItem as any);
+    profile.calculateCompletion();
+    await profile.save();
+  } catch (err) {
+    console.error('Failed to automatically add completed deliverable to creator portfolio:', err);
+  }
+}
+
 // -------------------------------------------------------------
 // 1. Projects Listing & Overview
 // -------------------------------------------------------------
@@ -218,6 +333,29 @@ export async function updateProjectStatus(req: Request, res: Response, next: Nex
 
       project.status = 'completed';
       await project.save();
+
+      // Automatically add completed deliverables to Creator's Portfolio Showcase
+      const brandId = (project.brandId as any)._id || project.brandId;
+      const creatorId = (project.creatorId as any)._id || project.creatorId;
+      const brandProfile = await BrandProfile.findOne({ userId: brandId }).lean();
+      const brandUser = await User.findById(brandId).lean();
+      const brandName = brandProfile?.companyName || brandUser?.name || 'Brand Client';
+
+      for (const m of project.milestones) {
+        const latestApprovedSub = await ProjectSubmission.findOne({
+          projectId: project._id,
+          milestoneId: m._id || (m as any).id,
+          status: 'approved'
+        }).sort({ version: -1 });
+
+        await addApprovedWorkToCreatorPortfolio({
+          project,
+          milestone: m,
+          submission: latestApprovedSub,
+          brandName,
+          creatorId
+        });
+      }
 
       await logProjectActivity({
         projectId: project._id as Types.ObjectId,
@@ -816,6 +954,15 @@ export async function reviewSubmission(req: Request, res: Response, next: NextFu
           { averageRating: avgRating, reviewCount: allReviews.length }
         );
       }
+
+      // Automatically add approved work to Creator's portfolio showcase
+      await addApprovedWorkToCreatorPortfolio({
+        project,
+        milestone,
+        submission,
+        brandName,
+        creatorId
+      });
 
       await logProjectActivity({
         projectId: project._id as Types.ObjectId,

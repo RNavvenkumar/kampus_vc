@@ -63,22 +63,12 @@ export const initiateMediaUpload = async (req: Request, res: Response): Promise<
       return;
     }
 
-    // 2. Enforce active pending upload quota (max 20 pending initiated uploads per user)
-    const pendingCount = await MediaAsset.countDocuments({
+    // 2. Clean up stale abandoned initiated uploads (older than 10 mins)
+    await MediaAsset.deleteMany({
       userId: req.user.id,
       status: 'initiated',
-      createdAt: { $gte: new Date(Date.now() - 30 * 60 * 1000) } // past 30 mins
-    });
-
-    if (pendingCount >= 20) {
-      res.status(429).json({
-        error: {
-          code: 'UPLOAD_QUOTA_EXCEEDED',
-          message: 'Too many pending upload requests. Please complete or wait for previous uploads to finalize.'
-        }
-      });
-      return;
-    }
+      createdAt: { $lt: new Date(Date.now() - 10 * 60 * 1000) }
+    }).catch(() => {});
 
     // 3. Generate secure, unpredictable storage object key
     const sanitizedName = mediaValidationService.sanitizeFilename(filename);

@@ -45,8 +45,12 @@ export const DeliverableSubmitModal: React.FC<DeliverableSubmitModalProps> = ({
     setExternalLinks(externalLinks.filter((_, i) => i !== index));
   };
 
+  const [dropzoneKey, setDropzoneKey] = useState(0);
+
   const handleAssetUploaded = (asset: MediaAsset, accessUrl: string) => {
     setAttachedAssets((prev) => [...prev, { asset, accessUrl }]);
+    // Increment dropzoneKey to allow uploading another file immediately
+    setDropzoneKey((prev) => prev + 1);
   };
 
   const removeAsset = (assetId: string) => {
@@ -143,13 +147,26 @@ export const DeliverableSubmitModal: React.FC<DeliverableSubmitModalProps> = ({
 
           {/* Media File Upload (Dropzone) */}
           <div>
-            <label className="block text-xs font-semibold text-gray-300 uppercase tracking-wider mb-2">
-              Upload Files or Video Render (Cloud Storage)
-            </label>
+            <div className="flex items-center justify-between mb-2">
+              <label className="text-xs font-semibold text-gray-300 uppercase tracking-wider">
+                Upload Deliverables (Images, MP4, MOV, WebM up to 250MB)
+              </label>
+              {attachedAssets.length > 0 && (
+                <button
+                  type="button"
+                  onClick={() => setDropzoneKey((k) => k + 1)}
+                  className="text-xs text-emerald-400 hover:text-emerald-300 font-medium"
+                >
+                  + Add Another File
+                </button>
+              )}
+            </div>
             <MediaUploadDropzone
+              key={dropzoneKey}
               onUploadComplete={handleAssetUploaded}
               category="all"
-              label="Drop artwork or video deliverables"
+              intendedUse="project_deliverable"
+              label="Drop deliverable image or video render"
             />
 
             {/* Attached Assets List */}
@@ -159,19 +176,36 @@ export const DeliverableSubmitModal: React.FC<DeliverableSubmitModalProps> = ({
                   {attachedAssets.length} file(s) attached to this deliverable:
                 </span>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                  {attachedAssets.map(({ asset }) => (
+                  {attachedAssets.map(({ asset, accessUrl }) => (
                     <div
                       key={asset.id}
-                      className="p-2.5 rounded-lg bg-[#161B26] border border-[#2B3545] flex items-center justify-between text-xs"
+                      className="p-2.5 rounded-lg bg-[#161B26] border border-[#2B3545] flex items-center justify-between text-xs gap-2"
                     >
-                      <div className="flex items-center gap-2 truncate">
-                        <Paperclip className="w-4 h-4 text-emerald-400 shrink-0" />
-                        <span className="text-gray-200 truncate">{asset.originalFilename}</span>
+                      <div className="flex items-center gap-2.5 truncate">
+                        {asset.mimeType?.startsWith('image/') || accessUrl ? (
+                          <img
+                            src={accessUrl || asset.accessUrl || ''}
+                            alt=""
+                            className="w-8 h-8 rounded object-cover bg-black/40 border border-white/10 shrink-0"
+                            onError={(e) => {
+                              (e.target as HTMLElement).style.display = 'none';
+                            }}
+                          />
+                        ) : (
+                          <Paperclip className="w-4 h-4 text-emerald-400 shrink-0" />
+                        )}
+                        <div className="truncate">
+                          <p className="text-gray-200 font-medium truncate">{asset.originalFilename}</p>
+                          <p className="text-[10px] text-gray-400">
+                            {(asset.fileSizeBytes / (1024 * 1024)).toFixed(1)} MB • {asset.mimeType?.split('/')[1]?.toUpperCase()}
+                          </p>
+                        </div>
                       </div>
                       <button
                         type="button"
                         onClick={() => removeAsset(asset.id)}
-                        className="text-gray-400 hover:text-red-400 ml-2"
+                        className="text-gray-400 hover:text-red-400 p-1 rounded transition-colors"
+                        title="Remove file"
                       >
                         <X className="w-4 h-4" />
                       </button>

@@ -35,6 +35,9 @@ export async function requireAuth(
   res: Response,
   next: NextFunction
 ): Promise<void> {
+  if (req.method === 'OPTIONS') {
+    return next();
+  }
   const token = extractSessionToken(req);
 
   if (!token) {
@@ -71,6 +74,9 @@ export async function requireAuth(
 
 export function requireRole(...allowedRoles: UserRole[]) {
   return (req: Request, res: Response, next: NextFunction): void => {
+    if (req.method === 'OPTIONS') {
+      return next();
+    }
     if (!req.user) {
       res.status(401).json({
         error: {
