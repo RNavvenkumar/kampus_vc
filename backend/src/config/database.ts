@@ -1,0 +1,80 @@
+import mongoose from 'mongoose';
+import { env } from './env.js';
+
+export interface DatabaseHealthStatus {
+  status: 'connected' | 'connecting' | 'disconnected' | 'error' | 'disabled';
+  host?: string;
+  name?: string;
+  error?: string;
+}
+
+let lastConnectionError: string | null = null;
+
+export async function connectDatabase(): Promise<boolean> {
+  if (!env.MONGODB_URI) {
+    console.log('ℹ️ No MONGODB_URI configured. Running in memory / offline mode.');
+    return false;
+  }
+
+  try {
+    mongoose.set('strictQuery', true);
+    await mongoose.connect(env.MONGODB_URI, {
+      serverSelectionTimeoutMS: 3000,
+    });
+    lastConnectionError = null;
+    console.log('✅ MongoDB connected successfully to:', mongoose.connection.name);
+    return true;
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : 'Unknown database connection error';
+    lastConnectionError = message;
+    console.warn(`⚠️ MongoDB connection to ${env.MONGODB_URI} failed (${message}).`);
+
+    if (env.NODE_ENV !== 'production') {
+      try {
+        console.log('🔄 Spinning up in-memory MongoDB development server...');
+        const { MongoMemoryServer } = await import('mongodb-memory-server');
+        const memServer = await MongoMemoryServer.create();
+        const uri = memServer.getUri();
+        await mongoose.connect(uri);
+        lastConnectionError = null;
+        console.log('✅ In-memory MongoDB connected successfully for development!');
+        return true;
+      } catch (memErr) {
+        console.warn('Could not start in-memory MongoDB:', memErr);
+      }
+    }
+
+    return false;
+  }
+}
+
+export async function disconnectDatabase(): Promise<void> {
+  if (mongoose.connection.readyState !== 0) {
+    await mongoose.disconnect();
+    console.log('✅ MongoDB connection closed.');
+  }
+}
+
+export function getDatabaseStatus(): DatabaseHealthStatus {
+  if (!env.MONGODB_URI) {
+    return { status: 'disabled' };
+  }
+
+  const readyState = mongoose.connection.readyState;
+  switch (readyState) {
+    case 1:
+      return {
+        status: 'connected',
+        host: mongoose.connection.host,
+        name: mongoose.connection.name
+      };
+    case 2:
+      return { status: 'connecting' };
+    case 0:
+    default:
+      return {
+        status: lastConnectionError ? 'error' : 'disconnected',
+        error: lastConnectionError || 'Database not connected'
+      };
+  }
+}

@@ -1,0 +1,76 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --bg-primary: #090B10;
+    --surface-dark: #11151D;
+    --surface-elevated: #181E29;
+    --border-color: #293140;
+    --accent-cyan: #58D5FF;
+    --accent-cyan-strong: #28BDF0;
+  }
+
+  body {
+    background-color: var(--bg-primary);
+    color: #F5F7FB;
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: 'Outfit', 'Inter', system-ui, sans-serif;
+  }
+}
+
+/* Custom modern scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #090B10;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #293140;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #3B465A;
+}
+
+/* Glassmorphism utility */
+.glass-panel {
+  background: rgba(17, 21, 29, 0.75);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(41, 49, 64, 0.6);
+}
+
+.glass-panel-elevated {
+  background: rgba(24, 30, 41, 0.85);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(88, 213, 255, 0.2);
+}
+
+/* Glow effects */
+.cyan-glow {
+  text-shadow: 0 0 20px rgba(88, 213, 255, 0.4);
+}
+
+/* Gradient text */
+.gradient-text-cyan {
+  background: linear-gradient(135deg, #FFFFFF 30%, #58D5FF 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.gradient-text-subtle {
+  background: linear-gradient(180deg, #F5F7FB 0%, #A6AFBD 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}

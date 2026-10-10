@@ -1,0 +1,30 @@
+{
+  "name": "kampus-vc-monorepo",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Kampus.VC — AI-Powered Creator Marketplace and Creative Collaboration Platform",
+  "workspaces": [
+    "frontend",
+    "backend"
+  ],
+  "scripts": {
+    "dev": "npm run dev --workspace=frontend",
+    "dev:all": "npm run dev --workspace=backend & npm run dev --workspace=frontend",
+    "dev:frontend": "npm run dev --workspace=frontend",
+    "dev:backend": "npm run dev --workspace=backend",
+    "build": "npm run build --workspaces",
+    "build:frontend": "npm run build --workspace=frontend",
+    "build:backend": "npm run build --workspace=backend",
+    "test": "npm run test --workspace=backend",
+    "test:backend": "npm run test --workspace=backend",
+    "lint": "npm run lint --workspaces --if-present"
+  },
+  "keywords": [
+    "marketplace",
+    "creators",
+    "ai-collaboration",
+    "kampus-vc"
+  ],
+  "author": "Kampus.VC Team",
+  "license": "UNLICENSED"
+}
