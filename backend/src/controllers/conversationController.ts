@@ -9,11 +9,20 @@ import { createNotification } from '../services/notificationService.js';
 
 export const inquireSchema = z.object({
   creatorId: z.string().min(1, 'Creator ID or Username is required'),
-  message: z.string().max(2000).optional(),
-  serviceTitle: z.string().max(200).optional(),
-  packageTier: z.string().max(50).optional(),
-  price: z.number().optional(),
-  currency: z.string().max(10).default('INR')
+  message: z.string().max(2000).optional().nullable(),
+  serviceTitle: z.string().max(200).optional().nullable(),
+  packageTier: z.string().max(50).optional().nullable(),
+  price: z
+    .union([
+      z.number(),
+      z.string().transform((v) => {
+        const num = Number(v.replace(/[^0-9.-]+/g, ''));
+        return isNaN(num) ? undefined : num;
+      })
+    ])
+    .optional()
+    .nullable(),
+  currency: z.string().max(10).default('INR').optional().nullable()
 });
 
 export const sendMessageSchema = z.object({
@@ -22,22 +31,69 @@ export const sendMessageSchema = z.object({
 
 /**
  * POST /api/conversations/inquire
- * Initiates an inquiry from a Brand to a Creator, creating conversation, message, and real notification.
+ * Initiates an inquiry from a Brand/Client to a Creator, creating conversation, message, and real notification.
  */
 export async function inquireCreator(req: Request, res: Response, next: NextFunction): Promise<void> {
   try {
     const brandUser = req.user as IUser;
+    if (!brandUser || !brandUser._id) {
+      res.status(401).json({ success: false, error: { message: 'Authentication required' } });
+      return;
+    }
+
     const { creatorId, message, serviceTitle, packageTier, price, currency } = inquireSchema.parse(req.body);
 
-    // Find target creator profile
+    // 1. Resolve Creator Profile and Creator User ID
     let creatorProfile: any = null;
+    let creatorUser: any = null;
+
     if (mongoose.Types.ObjectId.isValid(creatorId)) {
       creatorProfile = await CreatorProfile.findById(creatorId);
+      if (!creatorProfile) {
+        // creatorId might be the User._id
+        creatorUser = await User.findById(creatorId);
+        if (creatorUser) {
+          creatorProfile = await CreatorProfile.findOne({ userId: creatorUser._id });
+        }
+      }
     }
+
     if (!creatorProfile) {
+      // Lookup by username or displayName
       creatorProfile = await CreatorProfile.findOne({
-        $or: [{ username: creatorId.toLowerCase() }, { displayName: creatorId }]
+        $or: [
+          { username: creatorId.toLowerCase() },
+          { displayName: { $regex: new RegExp(`^${creatorId.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`, 'i') } }
+        ]
       });
+    }
+
+    // Support demo creator IDs (e.g. demo-1, demo-2)
+    if (!creatorProfile && creatorId.startsWith('demo-')) {
+      const demoUser = await User.findOne({ email: 'creator@kampus.vc' });
+      if (demoUser) {
+        creatorProfile = await CreatorProfile.findOne({ userId: demoUser._id });
+      }
+    }
+
+    // Fallback: check User collection directly if creatorProfile still not found
+    if (!creatorProfile) {
+      creatorUser = await User.findOne({
+        $or: [
+          { email: creatorId.toLowerCase() },
+          { name: { $regex: new RegExp(`^${creatorId.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`, 'i') } }
+        ]
+      });
+      if (creatorUser) {
+        creatorProfile = await CreatorProfile.findOne({ userId: creatorUser._id });
+        if (!creatorProfile) {
+          creatorProfile = await CreatorProfile.create({
+            userId: creatorUser._id,
+            displayName: creatorUser.name || 'Creator',
+            username: creatorUser.email.split('@')[0].toLowerCase()
+          });
+        }
+      }
     }
 
     if (!creatorProfile || !creatorProfile.userId) {
@@ -53,28 +109,31 @@ export async function inquireCreator(req: Request, res: Response, next: NextFunc
     if (creatorUserId.toString() === brandUser._id.toString()) {
       res.status(400).json({
         success: false,
-        error: { message: 'You cannot send an inquiry to yourself.' }
+        error: { message: 'You cannot send an inquiry or message to your own profile.' }
       });
       return;
     }
 
-    // Find existing conversation or create new
+    // Clean price
+    const parsedPrice = typeof price === 'number' && !isNaN(price) ? price : undefined;
+
+    const inquiryNote = serviceTitle
+      ? `Hi ${creatorProfile.displayName || 'Creator'}, I am inquiring about your "${serviceTitle}" package (${packageTier || 'standard'})${parsedPrice ? ` for ₹${parsedPrice.toLocaleString()}` : ''}. ${message || "I'd love to discuss our project requirements."}`
+      : message || `Hi ${creatorProfile.displayName || 'Creator'}, I am inquiring about a custom project on Kampus.VC. Let's discuss scope and availability!`;
+
+    // 2. Find existing conversation or create new
     let conversation = await Conversation.findOne({
       participants: { $all: [brandUser._id, creatorUserId] }
     });
-
-    const inquiryNote = serviceTitle
-      ? `Hi ${creatorProfile.displayName}, I am inquiring about your "${serviceTitle}" package (${packageTier || 'standard'}) for ₹${price?.toLocaleString() || ''}. ${message || "I'd love to discuss our project requirements."}`
-      : message || `Hi ${creatorProfile.displayName}, I am inquiring about a custom project on Kampus.VC. Let's discuss scope and availability!`;
 
     if (!conversation) {
       conversation = await Conversation.create({
         participants: [brandUser._id, creatorUserId],
         creatorProfileId: creatorProfile._id,
         inquiryContext: {
-          serviceTitle,
-          packageTier,
-          price,
+          serviceTitle: serviceTitle || undefined,
+          packageTier: packageTier || undefined,
+          price: parsedPrice,
           currency: currency || 'INR'
         },
         lastMessage: {
@@ -93,16 +152,16 @@ export async function inquireCreator(req: Request, res: Response, next: NextFunc
       conversation.lastMessageAt = new Date();
       if (serviceTitle) {
         conversation.inquiryContext = {
-          serviceTitle,
-          packageTier,
-          price,
+          serviceTitle: serviceTitle || undefined,
+          packageTier: packageTier || undefined,
+          price: parsedPrice,
           currency: currency || 'INR'
         };
       }
       await conversation.save();
     }
 
-    // Create the message record
+    // 3. Create the direct message record
     const directMessage = await DirectMessage.create({
       conversationId: conversation._id,
       senderId: brandUser._id,
@@ -111,26 +170,51 @@ export async function inquireCreator(req: Request, res: Response, next: NextFunc
       isRead: false
     });
 
-    // Send real-time notification to Creator
-    await createNotification({
-      recipientId: creatorUserId as any,
-      type: 'project_inquiry',
-      title: `New Project Inquiry from ${brandUser.name}`,
-      message: serviceTitle
-        ? `${brandUser.name} inquired about your "${serviceTitle}" package.`
-        : `${brandUser.name} sent you a direct project inquiry: "${inquiryNote.slice(0, 100)}..."`,
-      conversationId: conversation._id as any
-    });
+    // 4. Send real-time notification to Creator
+    try {
+      await createNotification({
+        recipientId: creatorUserId as any,
+        type: 'project_inquiry',
+        title: `New Project Inquiry from ${brandUser.name || 'Client'}`,
+        message: serviceTitle
+          ? `${brandUser.name || 'Client'} inquired about your "${serviceTitle}" package.`
+          : `${brandUser.name || 'Client'} sent you a direct project inquiry: "${inquiryNote.slice(0, 100)}..."`,
+        conversationId: conversation._id as any
+      });
+    } catch (notifErr) {
+      console.warn('Failed to send inquiry notification (non-fatal):', notifErr);
+    }
+
+    // 5. Format conversation response with partner and creatorProfile for immediate UI hydration
+    const formattedConversation = {
+      ...conversation.toJSON(),
+      id: conversation._id.toString(),
+      partner: {
+        id: creatorUserId.toString(),
+        name: creatorProfile.displayName || 'Creator',
+        role: 'creator',
+        avatarUrl: creatorProfile.avatarUrl
+      },
+      creatorProfile: {
+        id: creatorProfile._id.toString(),
+        displayName: creatorProfile.displayName || 'Creator',
+        headline: creatorProfile.headline || '',
+        avatarUrl: creatorProfile.avatarUrl,
+        username: creatorProfile.username
+      },
+      unreadCount: 0
+    };
 
     res.status(201).json({
       success: true,
       message: `Inquiry sent successfully to ${creatorProfile.displayName}!`,
       data: {
-        conversation,
+        conversation: formattedConversation,
         message: directMessage
       }
     });
-  } catch (err) {
+  } catch (err: any) {
+    console.error('Error in inquireCreator:', err);
     next(err);
   }
 }
