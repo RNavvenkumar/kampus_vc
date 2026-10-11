@@ -84,6 +84,9 @@ export const HomePage: React.FC = () => {
                   <img
                     src="https://images.unsplash.com/photo-1578632767115-351597cf2477?w=1000&auto=format&fit=crop&q=80"
                     alt="AI Concept Art"
+                    onError={(e) => {
+                      (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1634017839464-5c339ebe3cb4?w=1000&auto=format&fit=crop&q=80';
+                    }}
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-background via-black/30 to-transparent" />
@@ -99,8 +102,11 @@ export const HomePage: React.FC = () => {
                 {/* Hero Feature 2: Marcus Sterling */}
                 <div className="relative rounded-xl overflow-hidden group h-80 md:h-96 bg-surface border border-border/60">
                   <img
-                    src="https://images.unsplash.com/photo-1633493106115-467268875501?w=1000&auto=format&fit=crop&q=80"
-                    alt="3D Kinetic Design"
+                    src="https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=1000&auto=format&fit=crop&q=80"
+                    alt="3D Kinetic Motion & VFX"
+                    onError={(e) => {
+                      (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1620641788421-7a1c342ea42e?w=1000&auto=format&fit=crop&q=80';
+                    }}
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-background via-black/30 to-transparent" />
@@ -118,6 +124,9 @@ export const HomePage: React.FC = () => {
                   <img
                     src="https://images.unsplash.com/photo-1534447677768-be436bb09401?w=1000&auto=format&fit=crop&q=80"
                     alt="AI Video Direction"
+                    onError={(e) => {
+                      (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1618005198919-d3d4b5a92ead?w=1000&auto=format&fit=crop&q=80';
+                    }}
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-background via-black/30 to-transparent" />
