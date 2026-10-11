@@ -32,8 +32,8 @@ const envSchema = z.object({
   AI_DAILY_USER_LIMIT: z.string().regex(/^\d+$/).transform(Number).default('50'),
 
   // Google OAuth 2.0
-  GOOGLE_CLIENT_ID: z.string().optional(),
-  GOOGLE_CLIENT_SECRET: z.string().optional(),
+  GOOGLE_CLIENT_ID: z.string().default('846122362882-ejed3dkk7vcf750mde77fhbmasm9ttl5.apps.googleusercontent.com').transform((val) => val.trim().replace(/[\r\n\t]/g, '')),
+  GOOGLE_CLIENT_SECRET: z.string().optional().transform((val) => val?.trim().replace(/[\r\n\t]/g, '')),
 
   // Media Object Storage (Phase 7 & Cloudinary)
   MEDIA_STORAGE_PROVIDER: z.enum(['local', 's3', 'cloudinary']).default('local'),

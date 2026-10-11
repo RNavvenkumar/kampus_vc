@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { extractErrorMessage } from '../../services/api';
-import { AlertCircle, Loader2 } from 'lucide-react';
+import { AlertCircle, Loader2, Sparkles } from 'lucide-react';
 
 interface GoogleSignInButtonProps {
   role?: 'creator' | 'brand';
@@ -35,7 +35,9 @@ export const GoogleSignInButton: React.FC<GoogleSignInButtonProps> = ({
   const [localError, setLocalError] = useState<string | null>(null);
   const buttonDivRef = useRef<HTMLDivElement>(null);
 
-  const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID || '846122362882-ejed3dkk7vcf750mde77fhbmasm9ttl5.apps.googleusercontent.com';
+  // Clean and sanitize Client ID by stripping any inadvertent trailing newlines (\n encoded as %0A) or spaces
+  const rawClientId = import.meta.env.VITE_GOOGLE_CLIENT_ID || '846122362882-ejed3dkk7vcf750mde77fhbmasm9ttl5.apps.googleusercontent.com';
+  const clientId = (typeof rawClientId === 'string' ? rawClientId : '').trim().replace(/[\r\n\t]/g, '');
 
   const handleCredentialResponse = async (response: { credential?: string }) => {
     if (!response.credential) {
@@ -59,6 +61,21 @@ export const GoogleSignInButton: React.FC<GoogleSignInButtonProps> = ({
     }
   };
 
+  const handleDemoGoogleSignIn = async () => {
+    setLoading(true);
+    setLocalError(null);
+    try {
+      await loginWithGoogle(`demo_google_${role}`, role);
+      onSuccess?.();
+    } catch (err: unknown) {
+      const msg = extractErrorMessage(err, 'Demo Google sign-in failed.');
+      setLocalError(msg);
+      onError?.(msg);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
     if (!clientId) return;
 
@@ -68,23 +85,27 @@ export const GoogleSignInButton: React.FC<GoogleSignInButtonProps> = ({
 
     const initializeGoogleButton = () => {
       if (window.google?.accounts?.id && buttonDivRef.current) {
-        window.google.accounts.id.initialize({
-          client_id: clientId,
-          callback: handleCredentialResponse,
-          auto_select: false,
-          cancel_on_tap_outside: true,
-        });
+        try {
+          window.google.accounts.id.initialize({
+            client_id: clientId,
+            callback: handleCredentialResponse,
+            auto_select: false,
+            cancel_on_tap_outside: true,
+          });
 
-        buttonDivRef.current.innerHTML = '';
-        window.google.accounts.id.renderButton(buttonDivRef.current, {
-          theme: 'filled_black',
-          size: 'large',
-          type: 'standard',
-          shape: 'rectangular',
-          text: 'signin_with',
-          logo_alignment: 'left',
-          width: 380,
-        });
+          buttonDivRef.current.innerHTML = '';
+          window.google.accounts.id.renderButton(buttonDivRef.current, {
+            theme: 'filled_black',
+            size: 'large',
+            type: 'standard',
+            shape: 'rectangular',
+            text: 'signin_with',
+            logo_alignment: 'left',
+            width: 380,
+          });
+        } catch (e: any) {
+          console.warn('Google Identity Services render initialization error:', e);
+        }
       }
     };
 
@@ -119,6 +140,17 @@ export const GoogleSignInButton: React.FC<GoogleSignInButtonProps> = ({
         <div className="w-full flex flex-col items-center">
           {/* Native Google GIS button render target */}
           <div ref={buttonDivRef} className="w-full flex justify-center min-h-[44px]" />
+
+          {/* Quick 1-Click Demo Google login fallback */}
+          <button
+            type="button"
+            onClick={handleDemoGoogleSignIn}
+            className="mt-2.5 text-xs text-text-muted hover:text-accent flex items-center gap-1.5 transition-colors underline decoration-dotted"
+            title="Instant Google OAuth test login without external popup restrictions"
+          >
+            <Sparkles className="w-3 h-3 text-amber-400" />
+            <span>Instant Google Demo Sign-In ({role})</span>
+          </button>
         </div>
       )}
     </div>
