@@ -1,189 +1,267 @@
-# Kampus.VC
+# Kampus.VC — Next-Gen AI Creator Marketplace & Escrow Platform
 
-> **Kampus.VC** is an AI-powered creator marketplace and creative collaboration platform connecting AI artists, motion designers, 3D animators, filmmakers, and digital creators with brands, agencies, and businesses.
+[![Deploy with Vercel](https://img.shields.io/badge/Deployed%20on-Vercel-black?style=for-the-badge&logo=vercel)](https://kampus-vc-mu.vercel.app)
+[![Deployed on Render](https://img.shields.io/badge/Backend-Render-46E3B7?style=for-the-badge&logo=render&logoColor=black)](https://kampus-vc.onrender.com)
+[![TypeScript Monorepo](https://img.shields.io/badge/TypeScript-5.x-blue?style=for-the-badge&logo=typescript)](https://www.typescriptlang.org/)
+[![React 18](https://img.shields.io/badge/React-18-61DAFB?style=for-the-badge&logo=react)](https://react.dev/)
+[![Razorpay](https://img.shields.io/badge/Payments-Razorpay%20Escrow-0C2340?style=for-the-badge&logo=razorpay)](https://razorpay.com/)
+[![Google Cloud](https://img.shields.io/badge/Auth-Google%20GIS%20OAuth%202.0-4285F4?style=for-the-badge&logo=google)](https://cloud.google.com/)
+
+> **Kampus.VC** is an AI-powered marketplace and collaborative escrow workspace designed for top-tier digital creators (3D artists, VFX animators, motion designers, AI creative directors) and forward-thinking brands. It streamlines discovery, algorithmic matching, proposal negotiation, milestone deliverables, real-time messaging, and secure financial escrow with bank-grade double-entry ledger tracking.
 
 ---
 
-## ⚡ Quick Start
+## 🌐 Live Deployments & Repository
+
+| Target | URL | Status |
+| :--- | :--- | :--- |
+| **Frontend Web App (Production)** | [https://kampus-vc-mu.vercel.app](https://kampus-vc-mu.vercel.app) | 🟢 Live |
+| **Backend API Server (Production)** | [https://kampus-vc.onrender.com](https://kampus-vc.onrender.com) | 🟢 Live |
+| **API Health Check** | [https://kampus-vc.onrender.com/api/health](https://kampus-vc.onrender.com/api/health) | 🟢 200 OK |
+| **GitHub Repository** | [https://github.com/RNavvenkumar/kampus_vc](https://github.com/RNavvenkumar/kampus_vc) | 🟢 Public |
+
+---
+
+## ⚡ Quick Demo Accounts & Walkthrough
+
+For hackathon judges and evaluators, the platform comes pre-seeded with clean, realistic collaborative data:
+
+| Role | Email | Password | Details |
+| :--- | :--- | :--- | :--- |
+| **Brand / Client** | `brand@nike.com` | `Password123!` | **Nike Virtual Studios** — 3 active briefs, 1 active milestone project, ₹65,000 in escrow |
+| **Lead Creator** | `creator@kampus.vc` | `Password123!` | **Elena Rostova** (3D Motion & VFX) — Active on *Air Max Dn 3D Campaign* |
+| **Cinematographer** | `marcus.chen@creator.io` | `Password123!` | **Marcus Chen** — 5.0★ rating, completed projects |
+| **Fashion Creator**| `priya.patel@creator.io` | `Password123!` | **Priya Patel** — 4.9★ rating, commercial portfolio |
+
+> [!TIP]
+> **1-Click Reset Demo Data**: At any time, you can click the **"Reset Demo Data"** button in the top banner of either the Creator or Brand dashboard. This immediately restores the database to a clean, active demo state.
+>
+> **1-Click Google Demo Sign-In**: On the login page, you can use the official Google button or click **"✨ Instant Google Demo Sign-In"** to bypass external popup restrictions.
+
+---
+
+## 🌟 Core Architecture & Capabilities
+
+```
+┌────────────────────────────────────────────────────────────────────────┐
+│                        KAMPUS.VC MONOREPO                              │
+├───────────────────────────────────┬────────────────────────────────────┤
+│           FRONTEND                │              BACKEND               │
+│  React 18 + Vite + TailwindCSS    │  Node.js + Express + TypeScript    │
+│  Lucide Icons + Glassmorphism     │  MongoDB Atlas + Mongoose          │
+├───────────────────────────────────┼────────────────────────────────────┤
+│  • AI Search & Filter UI          │  • Semantic Search Intent Engine   │
+│  • Brand & Creator Dashboards     │  • 5-Factor Explainable Matcher    │
+│  • Milestone Workspaces           │  • Razorpay Escrow & Webhooks      │
+│  • Media Dropzone & Playback      │  • Double-Entry Immutable Ledger   │
+│  • WhatsApp-Style Direct Chat     │  • Pluggable Storage (Local/Cloud) │
+│  • Google Identity Services (GIS) │  • Google OAuth2 Token Verifier    │
+└───────────────────────────────────┴────────────────────────────────────┘
+```
+
+---
+
+### 1. 🔍 Semantic AI Search & Explainable Matching
+- **Natural Language Intent Parsing (`/api/creators/parse-search-intent`)**:
+  - Translates freeform brand queries (e.g., *"Looking for an Unreal Engine 3D artist under ₹50,000 with immediate availability"*) into structured database query filters.
+- **5-Factor Explainable Matching Algorithm (0–100 pts)**:
+  - **Specialties Fit** (35 pts)
+  - **Creative Tools Alignment** (25 pts)
+  - **Verified Portfolio Evidence** (20 pts)
+  - **Budget Alignment** (10 pts)
+  - **Availability Status** (10 pts)
+  - Yields transparent match scores, factor breakdown bars, and gap analysis.
+- **Creator Opportunity Hub (`/creator/opportunities`)**:
+  - Algorithmic feed ranking published briefs by creator compatibility.
+
+### 2. 🛡️ Milestone Management & Deliverable Review
+- **Role-Guarded Collaboration Workspace (`/api/projects/:projectId/*`)**:
+  - Boundary-isolated spaces accessible only to contracted parties.
+  - Immutable contract agreement snapshots protecting agreed prices and deliverables.
+- **Interactive Deliverable Submission & Media Player**:
+  - Versioned deliverables (v1, v2, v3...) with notes and asset attachments.
+  - Inline HTML5 `<video controls>` player and high-resolution image cards.
+  - 1-Click Quick Demo Presets:
+    - 🎬 *3D Motion Reel (MP4)*
+    - 🖼️ *4K Sneaker Hero Keyframe (PNG)*
+    - ⚡ *Cyberpunk Color Grade Pass (PNG)*
+- **Brand Review Pipeline**:
+  - One-click approval with automatic escrow milestone payout trigger.
+  - Revision request workflow with mandatory feedback explanation.
+
+### 3. 💳 Razorpay Escrow, Ledger & Financial Dashboard
+- **Gateway Abstraction (`IPaymentProvider`)**: Pluggable interface supporting real Razorpay REST API calls and offline mock modes.
+- **Minor Units Financial Exactness**: All amounts handled in exact minor currency units across 8 global currencies (`INR`, `USD`, `EUR`, `GBP`, `CAD`, `AUD`, `SGD`, `AED`).
+- **Cryptographic Signature Verification**: Timing-safe HMAC-SHA256 signature verification for checkouts and webhooks.
+- **Double-Entry Immutable Accounting (`FinancialLedgerEntry`)**:
+  - Balanced transactions enforcing `Sum(Debit) === Sum(Credit)`.
+  - Append-only records tracking `brand_funds`, `escrow_hold`, `creator_earnings`, and `platform_revenue`.
+- **Live Dashboard Payout Metrics**:
+  - Dedicated column under the welcome banner detailing pending creator earnings and platform fee obligations.
+
+### 4. 💬 WhatsApp-Style Direct Messaging
+- Real-time conversation stream with partner status badges, unread message counts, search filters, and persistent history.
+- Modal popup chat option accessible from anywhere across the platform.
+
+### 5. 🔐 Google OAuth 2.0 & Session Security
+- Native Google Identity Services (GIS) One Tap and standard button integration.
+- Server-side ID token verification via `google-auth-library`.
+- Sanitized origin handling eliminating invisible whitespace and `%0A` newline issues.
+- `httpOnly`, `SameSite=Lax`, cryptographically signed session cookies.
+
+---
+
+## 📁 Repository Structure
+
+```
+kampus_vc/
+├── backend/
+│   ├── src/
+│   │   ├── config/             # Environment validation (Zod) & database config
+│   │   ├── controllers/        # Express request handlers (Auth, Projects, Payments, Media, AI)
+│   │   ├── models/             # Mongoose schemas (User, Brief, Project, Payment, Ledger, etc.)
+│   │   ├── routes/             # RESTful API route definitions
+│   │   ├── scripts/            # Database seed and reset automation (seed.ts)
+│   │   ├── services/           # Business logic (AI Search, Sessions, Ledger, Matching)
+│   │   ├── storage/            # Local and S3/Cloudinary media storage providers
+│   │   └── tests/              # Vitest automated integration suite
+│   ├── package.json
+│   └── tsconfig.json
+├── frontend/
+│   ├── public/                 # Static brand assets and favicons
+│   ├── src/
+│   │   ├── components/         # Reusable UI components, Modals, Dropzones, Chat
+│   │   ├── context/            # Global Auth and State context
+│   │   ├── pages/              # Route pages (Dashboards, Explore, Projects, Auth)
+│   │   ├── services/           # Axios HTTP client and API definitions
+│   │   ├── types/              # Comprehensive TypeScript interfaces
+│   │   └── App.tsx             # Application router
+│   ├── package.json
+│   ├── tailwind.config.js
+│   └── vite.config.ts
+├── docs/                       # Architecture diagrams and deployment specifications
+├── package.json                # Monorepo root scripts
+└── README.md
+```
+
+---
+
+## 🛠️ Local Development Setup
 
 ### Prerequisites
-- **Node.js**: v18+ (tested on Node v24 LTS)
-- **npm**: v9+ (tested on npm v11)
-- **MongoDB**: Local MongoDB instance (`mongodb://localhost:27017/kampus-vc`) or MongoDB Atlas URI (Note: the automated test suite includes embedded `mongodb-memory-server` and runs self-contained without external database setup).
+- **Node.js**: v18.0.0 or higher
+- **npm**: v9.0.0 or higher
+- **MongoDB**: Local MongoDB instance (`mongodb://localhost:27017/kampus-vc`) or MongoDB Atlas connection string.
 
-### 1. Installation
-Install all dependencies across the monorepo with a single command:
+### 1. Clone & Install Dependencies
 ```bash
+git clone https://github.com/RNavvenkumar/kampus_vc.git
+cd kampus_vc
 npm install
 ```
 
-### 2. Environment Configuration
-Copy the example environment configuration:
-```bash
-cp .env.example .env
+### 2. Configure Environment Variables
+
+Create `.env` in the root directory:
+```env
+# Server
+NODE_ENV=development
+PORT=4000
+FRONTEND_ORIGIN=http://localhost:5173
+MONGODB_URI=mongodb://localhost:27017/kampus-vc
+SESSION_SECRET=your_super_secure_session_secret_min_32_chars
+LOG_LEVEL=debug
+
+# Google OAuth 2.0 (Google Cloud Console)
+GOOGLE_CLIENT_ID=your_client_id.apps.googleusercontent.com
+GOOGLE_CLIENT_SECRET=your_google_client_secret
+
+# Razorpay Payments (Test Mode)
+PAYMENT_PROVIDER=razorpay
+RAZORPAY_ENVIRONMENT=test
+RAZORPAY_KEY_ID=rzp_test_your_key_id
+RAZORPAY_KEY_SECRET=your_razorpay_secret_key
+
+# Cloudinary Media Storage
+MEDIA_STORAGE_PROVIDER=cloudinary
+CLOUDINARY_CLOUD_NAME=your_cloudinary_cloud_name
+CLOUDINARY_API_KEY=your_cloudinary_api_key
+CLOUDINARY_API_SECRET=your_cloudinary_api_secret
 ```
 
-### 3. Running Locally
-
-```bash
-# Terminal 1: Backend API (port 4000)
-npm run dev:backend
-
-# Terminal 2: Frontend App (port 5173)
-npm run dev:frontend
+Create `frontend/.env`:
+```env
+VITE_API_BASE_URL=http://localhost:4000/api
+VITE_APP_NAME="Kampus.VC"
+VITE_ENABLE_DEMO_MODE=true
+VITE_GOOGLE_CLIENT_ID=your_client_id.apps.googleusercontent.com
+VITE_RAZORPAY_KEY_ID=rzp_test_your_key_id
+VITE_CLOUDINARY_CLOUD_NAME=your_cloudinary_cloud_name
 ```
 
-#### Open the Application:
-- **Frontend Web App:** [http://localhost:5173](http://localhost:5173)
-- **Creator Discovery & Semantic Search:** [http://localhost:5173/explore](http://localhost:5173/explore)
-- **Creator Opportunity Discovery:** [http://localhost:5173/creator/opportunities](http://localhost:5173/creator/opportunities)
-- **AI Creative Studio:** [http://localhost:5173/brand/creative-studio](http://localhost:5173/brand/creative-studio)
-- **Public Campaign Directory:** [http://localhost:5173/briefs](http://localhost:5173/briefs)
-- **Creator Proposals:** [http://localhost:5173/creator/proposals](http://localhost:5173/creator/proposals)
-- **Brand Proposal Review Center:** [http://localhost:5173/brand/proposals](http://localhost:5173/brand/proposals)
-- **Awarded Projects:** [http://localhost:5173/projects](http://localhost:5173/projects)
-- **Backend Health Check:** [http://localhost:4000/api/health](http://localhost:4000/api/health)
+### 3. Seed Demo Data
+```bash
+cd backend
+npm run seed
+```
 
----
-
-## 🚀 Phase 6 Features Implemented: Intelligent Discovery & Explainable Matching
-
-### 1. Intelligent Creator Discovery & Multi-Filter Engine (`/api/creators/search`)
-- **Multi-Factor Filtering**: Category, creative tools (Blender, Unreal Engine, Midjourney, etc.), specialties, min/max price range, currency (USD, EUR, GBP, etc.), availability status, and experience level.
-- **Sorting Options**: Best Match score, Price (Low to High / High to Low), Newest, and Experience Level.
-- **Privacy Enforcement**: Strictly hides private portfolio items (`isPublic: false`) and draft services from search results; prevents PII leakage (emails, password hashes).
-- **ReDoS Safety**: Safe regular expression escaping on all natural text search inputs.
-
-### 2. Natural Language AI Search Intent Parser (`/api/creators/parse-search-intent`)
-- Translates free-form brand prompts (e.g., *"Looking for an Unreal Engine 3D artist under $5000 with immediate availability"*) into structured filter parameters.
-- Combines Gemini structured generation with an instant, deterministic regex heuristic fallback.
-
-### 3. Explainable Creator–Campaign Matching Engine (`/api/brand/briefs/:briefId/matches`)
-- **Deterministic 5-Factor Scoring (0–100 pts)**:
-  - Primary Specialties Fit (up to 35 pts)
-  - Creative Tools Match (up to 25 pts)
-  - Verified Portfolio Evidence Citations (up to 20 pts)
-  - Budget & Currency Alignment (up to 10 pts)
-  - Availability Status (up to 10 pts)
-- **Transparent Explainability**: Returns overall match percentage, breakdown per factor, specific portfolio piece citations, matching strengths, and candidate gap analysis.
-- **Access Control**: Enforces brand ownership over campaign briefs.
-
-### 4. Creator-Facing Campaign Opportunity Discovery (`/api/creator/opportunities`)
-- Personalized campaign discovery feed ranking published briefs by creator compatibility score.
-- Annotates campaigns with creator pitch status (`hasPitched`, `proposalStatus`, `proposalId`) and direct pitch call-to-action.
-- Dedicated single-campaign compatibility checker endpoint (`/api/creator/opportunities/:briefId/compatibility`).
-
-### 5. Modern Frontend Experiences
-- **Brand Creator Discovery Gallery (`/explore`, `/brand/creators`)**: Interactive search bar with AI natural language intent prompt trigger, live filter drawer, and creator profile preview modal.
-- **Brand Campaign Matches View (`/brand/briefs/:briefId/matches`)**: Visual match gauge, factor breakdown progress bars, portfolio citation links, and invite/pitch review CTAs.
-- **Creator Opportunities Hub (`/creator/opportunities`)**: Compatibility score badges, factor summaries, and one-click pitch navigation.
-
----
-
-## 🔒 Phase 7 Features Implemented: Secure Media Uploads & Object Storage
-
-### 1. Production Storage Provider Abstraction (`IStorageProvider`)
-- **Pluggable Architecture**: Seamless switching between `local` (filesystem with cryptographic HMAC URLs) and `s3` (AWS S3, Cloudflare R2, MinIO with SigV4 presigned URLs).
-- **Direct-to-Storage Uploads**: Short-lived (15 min) pre-authenticated upload URLs with real-time browser progress reporting (`0%` → `100%`).
-- **Path Traversal Fortress**: Server-side UUID key assignment rejecting leading slashes, path traversal sequences (`..`), and absolute drive paths.
-
-### 2. Multi-Tier Media Security & Verification
-- **Magic Byte Signature Inspection**: Server-side validation of raw file signatures (JPEG, PNG, GIF, WebP, MP4, WebM, QuickTime MOV) independent of client MIME headers.
-- **SVG & Script Blocking**: Rejects SVGs and script payloads to eliminate stored Cross-Site Scripting (XSS) and XML External Entity (XXE) vulnerabilities.
-- **Safe Dimension Extraction**: Header-only binary parsing for PNG, JPEG, and GIF dimensions without invoking heavy or vulnerable native processes.
-
-### 3. Portfolio Asset Management & Lifecycle
-- **Ownership & Access Controls**: Strict asset ownership isolation; private assets require owner session verification, public items stream via signed time-limited access tokens.
-- **Portfolio Synchronization**: Automatic visibility synchronization (`public` / `unlisted` / `private`) and foreign asset hijacking prevention.
-- **Cascade Deletion Safeguards**: Protects active portfolio pieces from accidental asset removal (`409 Conflict: ASSET_IN_USE` unless forced).
-- **Media Cleanup Engine**: Automatic background sweeping of abandoned uploads.
-
-### 4. Interactive Frontend Media Suite
-- **Drag-and-Drop Media Dropzone**: Dark-first UI component (`MediaUploadDropzone`) featuring live upload percentage progress bars, file size & type badge indicators, cancellation, and thumbnail/video previews.
-- **Portfolio Item Integration**: Modal switcher in `PortfolioEditorModal` allowing creators to choose between direct verified file uploads or external project URLs.
-
----
-
-## 🤝 Phase 8 Features Implemented: Project Collaboration, Milestone Tracking & Deliverable Review
-
-### 1. Private Project Workspace & Participant Isolation
-- **Role-Based Workspace Boundary**: Only authorized creators and brands of the specific awarded project can access `/api/projects/:projectId/*`. Third parties and unauthenticated callers receive indistinguishable 404/403 responses.
-- **5-Tab Dark-First Collaboration UI**:
-  - **Overview & Agreement**: Contract terms, immutable agreement snapshot, agreed deliverables checklist, participant profiles, and project kickoff/completion actions.
-  - **Milestones & Deliverables**: Interactive pipeline with real milestone states (`not_started`, `in_progress`, `submitted_for_review`, `revision_requested`, `approved`), version submission drawer, and brand review dialog.
-  - **Workspace Files**: Visual gallery of all project renders and attachments with direct signed streaming/download access.
-  - **Collaboration Chat**: Real-time polling chat stream between creator and brand with file attachments and markdown rendering.
-  - **Activity Log**: Chronological audit trail of all project events (kickoffs, submissions, reviews, messages).
-
-### 2. Milestone Lifecycle & Deliverable Review Workflow
-- **Deliverable Submission (`POST /api/projects/:projectId/milestones/:milestoneId/submissions`)**:
-  - Creator submits versioned work (v1, v2, v3...) with walkthrough notes, external project links (Figma, GitHub, Loom), and Phase 7 verified media assets.
-  - Verifies creator asset ownership and links media assets to the project.
-  - Transitions milestone to `submitted_for_review` and triggers notifications to brand.
-- **Brand Review Actions (`POST /api/projects/:projectId/submissions/:submissionId/review`)**:
-  - **Revision Requests**: Requires a detailed feedback explanation (min 5 characters) and transitions milestone to `revision_requested`.
-  - **Deliverable Approvals**: Approves specific submission versions and advances milestone to `approved`.
-- **Project Completion Safeguards**:
-  - Gated on 100% milestone approval; blocks early completion (`409 Conflict: UNFINISHED_DELIVERABLES`).
-  - Agreement snapshot remains 100% immutable and protected against unilateral scope edits.
-
-### 3. Persistent Project-Scoped Messaging
-- Dedicated `ProjectMessage` model with sender role badges, attachments, reply references, and sanitization against HTML/XSS injection.
-
----
-
-## 💳 Phase 9 Features Implemented: Real Payment Integration, Escrow, Refunds & Financial Ledger
-
-### 1. Payment Provider Abstraction & Razorpay Integration
-- **Gateway Abstraction (`IPaymentProvider`)**: Pluggable interface supporting real Razorpay REST API calls and offline deterministic `MockPaymentProvider` for continuous test isolation.
-- **Cryptographic Signature Validation**:
-  - Checkout verification: HMAC-SHA256 of `order_id|payment_id` with timing-safe comparison.
-  - Webhook verification: HMAC-SHA256 of raw request body validated against `X-Razorpay-Signature`.
-- **Minor Units Financial Exactness**: All monetary sums stored and calculated as exact integers (e.g. 150000 minor units for $1,500.00 USD) across 8 global currencies (`USD`, `INR`, `EUR`, `GBP`, `CAD`, `AUD`, `SGD`, `AED`).
-
-### 2. Milestone Payment Order & Escrow Lifecycle
-- **Brand-Only Order Creation (`POST /api/projects/:projectId/payments/orders`)**:
-  - Authoritative contractual pricing sourced from `Project.agreementSnapshot` or `Project.milestones`.
-  - Prevents duplicate milestone funding and verifies project participant authorization.
-  - Idempotency key protection for zero duplicate transactions on network retries.
-- **Checkout Verification (`POST /api/payments/verify`)**:
-  - Transitions payment to `captured`, advances project status if in kickoff, records balanced ledger entries, and notifies creators.
-
-### 3. Webhook Ingestion & Replay Defense (`POST /api/payments/webhook`)
-- Raw body signature verification.
-- Idempotency deduplication via `PaymentWebhookEvent.eventId` preventing double-capture or replay attacks.
-- Asynchronous handling for `payment.captured`, `payment.failed`, and `refund.processed`.
-
-### 4. Full & Partial Refunds (`POST /api/payments/:paymentId/refunds`)
-- Validates requested refund amount against `remainingRefundableAmountMinor`.
-- Issues gateway refund and writes compensating double-entry ledger records.
-
-### 5. Double-Entry Immutable Financial Ledger (`FinancialLedgerEntry`)
-- Append-only immutable accounting entries tracking `brand_funds`, `escrow_hold`, `creator_earnings`, and `platform_revenue`.
-- Validates double-entry invariant: `Sum(Debit) === Sum(Credit)`.
-- Reconciles gateway capture status against database state (`POST /api/payments/reconcile`).
-
-### 6. Interactive Frontend Financial Suite
-- **Escrow & Financials Tab**: Real-time cards for Total Contract, Held in Escrow, Deposited Funds, and Remaining Payable.
-- **Razorpay Hosted Checkout Modal**: Live script injection (`checkout.js`) with sandbox simulation fallback.
-- **Milestone-Level Funding Badges**: Visual "Fund Escrow" buttons and "Funded in Escrow" verified status badges.
-- **Auditable Financial Ledger**: Live verified ledger transaction log.
+### 4. Run Concurrent Development Servers
+```bash
+# From workspace root:
+npm run dev:backend     # Starts Express on http://localhost:4000
+npm run dev:frontend    # Starts Vite on http://localhost:5173
+```
 
 ---
 
 ## 🧪 Testing & Validation
 
+The codebase includes an integration test suite testing authentication, proposal bidding, agreement snapshots, deliverable review, payment escrows, and ledger balances.
+
 ```bash
-# Run Vitest integration test suite (108 tests across 16 test files)
+# Run Vitest integration test suite (16 test suites, 108 tests)
 npm run test
 
-# Run production build validation (TypeScript + Vite)
+# Run strict TypeScript build validation across workspaces
 npm run build
 ```
 
-**Test Results:**
-- 16 test files, 108 integration tests passing (100% pass rate).
-- Production TypeScript and Vite builds: 0 errors across frontend and backend workspaces.
+---
 
-#   k a m p u s _ v c  
- 
+## 📡 Key REST API Endpoints
+
+### Authentication & Users
+- `POST /api/auth/register` — Create brand or creator account.
+- `POST /api/auth/login` — Email/password login with secure session cookie.
+- `POST /api/auth/google` — Google OAuth 2.0 ID token authentication.
+- `GET /api/auth/me` — Retrieve active user session profile.
+- `POST /api/auth/logout` — Invalidate session and destroy cookies.
+
+### Campaigns & Opportunities
+- `GET /api/briefs` — Query published campaign briefs with filtering.
+- `POST /api/briefs` — Author a new brand campaign brief.
+- `GET /api/creator/opportunities` — Creator feed ranked by compatibility score.
+- `GET /api/brand/briefs/:id/matches` — Explainable creator matches for a campaign.
+
+### Projects & Milestones
+- `GET /api/projects` — List user's active and completed projects.
+- `GET /api/projects/:id` — Get project details, milestones, and agreement terms.
+- `POST /api/projects/:id/milestones/:mId/submissions` — Submit deliverable media.
+- `POST /api/projects/:id/submissions/:sId/review` — Approve deliverable or request revision.
+
+### Escrow & Payments
+- `POST /api/projects/:id/payments/orders` — Create Razorpay escrow order.
+- `POST /api/payments/verify` — Verify cryptographic signature & fund escrow.
+- `GET /api/projects/:id/financials` — Get escrow balance and immutable ledger history.
+- `POST /api/payments/:id/refunds` — Process full or partial escrow refund.
+
+### Platform Management
+- `POST /api/seed` — Instant remote database reset and realistic demo re-seed.
+- `GET /api/health` — Service liveness and database connection status.
+
+---
+
+## 👥 Authors & Acknowledgments
+
+- **Lead Developer**: [@RNavvenkumar](https://github.com/RNavvenkumar)
+- **Built for**: Advanced Creator-Brand Collaboration & Secure Escrow Hackathon Showcase.
